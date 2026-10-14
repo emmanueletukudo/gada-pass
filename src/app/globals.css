@@ -1,0 +1,79 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f7f7f2;
+  --foreground: #17211b;
+  --ink: #17211b;
+  --muted: #6d766d;
+  --cream: #f7f7f2;
+  --paper: #fffef9;
+  --lime: #d6f94a;
+  --coral: #ff765f;
+  --blue: #7ca9ff;
+  --line: #dce1d5;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: "Avenir Next", "Trebuchet MS", sans-serif;
+  --font-display: "Avenir Next", "Trebuchet MS", sans-serif;
+}
+
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: "Avenir Next", "Trebuchet MS", sans-serif;
+}
+
+.stsearch-box input {
+  border: none !important;
+}
+.stdropdown-container {
+    border-radius: 10px !important;
+}
+.stdropdown-item.selected {
+    color: #fff;
+    background-color: #000000 !important;
+}
+.stdropdown-item:hover {
+    background-color: #d6d5d5 !important;
+}
+
+
+@keyframes scan {
+  0% {
+    top: 0%;
+    opacity: 0.8;
+  }
+  50% {
+    top: 96%;
+    opacity: 1;
+  }
+  100% {
+    top: 0%;
+    opacity: 0.8;
+  }
+}
+
+* { box-sizing: border-box; }
+::selection { background: var(--lime); color: var(--ink); }
+.display { font-family: "Avenir Next", "Trebuchet MS", sans-serif; }
+.grain { background-image: radial-gradient(#17211b12 0.7px, transparent 0.7px); background-size: 8px 8px; }
+.event-card { transition: transform 180ms ease, box-shadow 180ms ease; }
+.event-card:hover { transform: translateY(-5px); box-shadow: 0 16px 32px #17211b14; }
+.hero-slide { flex: 0 0 clamp(7rem, 18vw, 13rem); min-width: 0; transition: height 500ms ease, opacity 500ms ease; }
+.hero-slide-track { width: max-content; transition: transform 650ms cubic-bezier(.22, .8, .24, 1); }
+.hero-slide-active { height: 31rem; }
+.hero-slide-rest { height: 20rem; opacity: 0.72; }
+@media (max-width: 767px) {
+  .hero-slide-active { height: 26rem; }
+  .hero-slide-rest { height: 20rem; }
+}
+@keyframes rise { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+.rise { animation: rise 650ms ease both; }
+.rise-delay { animation-delay: 100ms; }
+.rise-delay-2 { animation-delay: 200ms; }
+
+
