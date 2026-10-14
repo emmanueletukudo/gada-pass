@@ -160,55 +160,6 @@ export function TicketCheckout({ eventId, tiers = [] }: TicketCheckoutProps) {
       });
 
       window.location.href = initialized.authorization_url as string;
-
-      // const publicKey = process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY;
-      // if (!publicKey) throw new Error('Paystack checkout is not configured');
-
-      // const PaystackPop = (await import('@paystack/inline-js')).default;
-      // const popup = new PaystackPop();
-
-      // popup.newTransaction({
-      //   key: publicKey,
-      //   email,
-      //   amount: initialized.amount ?? Math.round(total * 100),
-      //   currency: initialized.currency ?? currencyCode,
-      //   ref: initialized.reference,
-      //   onSuccess: async () => {
-      //     try {
-      //       await api(`/events/${eventId}/reserve`, {
-      //         method: 'POST',
-      //         body: JSON.stringify({
-      //           ...payload,
-      //           paymentReference: initialized.reference,
-      //         }),
-      //       });
-
-      //       toast.success(
-      //         'Payment confirmed! Ticket details sent to your email.',
-      //       );
-      //       setIsDrawerOpen(false);
-
-      //       if (isAuthenticated) {
-      //         router.push('/dashboard/attendee');
-      //       } else {
-      //         reset();
-      //         setQuantities({});
-      //       }
-      //     } catch (reserveError) {
-      //       toast.error(
-      //         reserveError instanceof Error
-      //           ? reserveError.message
-      //           : 'Failed to complete reservation.',
-      //       );
-      //     } finally {
-      //       setIsProcessing(false);
-      //     }
-      //   },
-      //   onCancel: () => {
-      //     toast.error('Checkout cancelled');
-      //     setIsProcessing(false);
-      //   },
-      // });
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : 'Checkout unavailable',

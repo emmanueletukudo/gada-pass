@@ -1,4 +1,3 @@
-// lib/audio.ts
 class SoundService {
   private audioCtx: AudioContext | null = null;
 

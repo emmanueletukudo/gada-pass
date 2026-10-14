@@ -55,12 +55,10 @@ export function OtpInput({
     const combinedOtp = newDigits.join('');
     onChange(combinedOtp);
 
-    // Auto-advance to next input
     if (digit && index < length - 1) {
       inputRefs.current[index + 1]?.focus();
     }
 
-    // Trigger auto-complete when the last digit is entered
     if (combinedOtp.length === length && onComplete) {
       onComplete(combinedOtp);
     }
@@ -136,7 +134,6 @@ export function OtpInput({
           ))}
         </div>
 
-        {/* Verifying Overlay */}
         {isVerifying && (
           <div className="absolute inset-0 flex items-center justify-center rounded-2xl bg-white/70 backdrop-blur-[1px]">
             <div className="flex items-center gap-2 rounded-full bg-[#17211b] px-4 py-1.5 text-xs font-bold text-white shadow-sm">
@@ -149,7 +146,6 @@ export function OtpInput({
 
       {error && <p className="text-xs font-semibold text-[#c34837]">{error}</p>}
 
-      {/* Resend Code Trigger */}
       {onResend && (
         <div className="flex items-center justify-between pt-1 text-xs">
           <span className="text-[#6d766d]">Didn&apos;t receive code?</span>

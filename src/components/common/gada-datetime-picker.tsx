@@ -17,7 +17,7 @@ interface GadaDateTimePickerProps<TFieldValues extends FieldValues> {
   label: string;
   error?: string;
   required?: boolean;
-  minDate?: Date; // ADDED PROPS
+  minDate?: Date; 
 }
 
 const MONTHS = [

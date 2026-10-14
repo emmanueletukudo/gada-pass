@@ -10,7 +10,7 @@ export interface CachedTicket {
 }
 
 export interface OutboxItem {
-  id?: number; // Auto-incremented primary key
+  id?: number; 
   ticketId: string;
   eventId: string;
   timestamp: string;

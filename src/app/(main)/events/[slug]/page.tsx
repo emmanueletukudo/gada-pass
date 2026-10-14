@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { TicketCheckout } from '@/components/ticket-checkout';
 import { api, eventCover, mediaUrl, type ApiEvent } from '@/lib/api';
 import { Logo } from '@/components/logo';
-import { ArrowLeft, ArrowUpRight, Building2 } from 'lucide-react';
+import {  ArrowUpRight, Building2 } from 'lucide-react';
 
 export default function EventPage({
   params,

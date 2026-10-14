@@ -27,17 +27,15 @@ export function Step3Tickets({ form }: Step3Props) {
     name: 'ticketTiers',
   });
 
-  // Handle Free Event mode defaults
+
   useEffect(() => {
     if (isFreeEvent) {
-      // For free events, lock existing tiers to ₦0 price
       fields.forEach((_, idx) => {
         setValue(`ticketTiers.${idx}.price`, 0, { shouldValidate: true });
       });
     }
   }, [isFreeEvent, fields.length, setValue]);
 
-  // Preset generator for fast tier creation
   const addPresetTier = (name: string, price: number, quantity: number) => {
     append({ name, price: isFreeEvent ? 0 : price, quantity });
   };
@@ -114,7 +112,6 @@ export function Step3Tickets({ form }: Step3Props) {
         </p>
       )}
 
-      {/* TIER LIST */}
       <div className="space-y-4">
         {fields.map((field, index) => (
           <div
