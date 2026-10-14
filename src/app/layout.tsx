@@ -22,7 +22,7 @@ export const metadata: Metadata = {
   
   openGraph: {
     title: 'Home | Gada Pass',
-    description:"Manage your events and tickets with Jetron Ticket Admin",
+    description:"Manage your events and tickets with Gada Pass Ticket Admin",
     siteName: "Gada Pass",
     type: "website",
     images: [''],
