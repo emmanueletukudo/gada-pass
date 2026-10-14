@@ -114,7 +114,6 @@ export function EventCardPreview({
             )}
           </div>
 
-          {/* PRICE & TICKETING BANNER */}
           <div className="flex items-center justify-between rounded-2xl bg-[#f7f7f2] p-4 border border-[#dce1d5] mt-4">
             <div>
               <div className="flex items-center gap-1.5">

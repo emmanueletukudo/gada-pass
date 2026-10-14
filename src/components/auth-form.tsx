@@ -533,13 +533,15 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
 
           <button
             disabled={isSubmitting}
-            className="w-full rounded-full items-center bg-[#17211b] py-4 font-bold text-white disabled:opacity-50 transition hover:bg-[#25332b]"
+            className=" inline-flex w-full items-center justify-center gap-2 w-full rounded-full bg-[#17211b] py-4 font-bold text-white disabled:opacity-50 transition hover:bg-[#25332b]"
           >
             {isSubmitting ? (
-              <Loader2 className="h-8 w-8 animate-spin text-[#17211b]" />
-            ) : 
-              'Log in'
-            }
+              <>
+                <Loader2 className="h-4 w-4 animate-spin text-[#d6f94a]" />
+              </>
+            ) : (
+              <span>Login</span>
+            )}
           </button>
           <button
             type="button"

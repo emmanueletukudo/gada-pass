@@ -2,18 +2,7 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Logo } from '@/components/logo';
-import {
-  ArrowRight,
-  ArrowUpRight,
-  Check,
-  ShieldCheck,
-  BarChart3,
-  Users,
-  QrCode,
-  Zap,
-  Sparkles,
-} from 'lucide-react';
+import { Check, BarChart3, Users, QrCode, Sparkles } from 'lucide-react';
 
 export default function PricingPage() {
   return (
@@ -21,7 +10,7 @@ export default function PricingPage() {
       <main>
         <section className="grain mx-3 overflow-hidden rounded-4xl bg-black px-5 pb-12 pt-14 text-white sm:px-8 md:mx-6 md:px-16 md:pb-20 md:pt-20">
           <div className="mx-auto flex max-w-4xl flex-col items-center justify-center text-center">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-bold tracking-wider uppercase text-[#d6f94a]">
+            <span className="inline-flex items-center gap-2 rounded-full  px-4 py-1.5 text-xs font-bold tracking-wider uppercase text-[#d6f94a]">
               <Sparkles className="h-3.5 w-3.5" /> Simple & Transparent Pricing
             </span>
             <h1 className="display rise rise-delay mt-6 text-center text-[clamp(2.8rem,7vw,6rem)] font-bold leading-[0.9] tracking-[-0.08em]">
@@ -44,7 +33,6 @@ export default function PricingPage() {
               className="flex flex-col justify-between rounded-3xl border border-[#dce1d5] bg-white p-8 shadow-sm"
             >
               <div>
-              
                 <h3 className="mt-4 text-3xl font-bold tracking-tight">
                   Free Tickets
                 </h3>
@@ -105,7 +93,6 @@ export default function PricingPage() {
               </div>
 
               <div>
-               
                 <h3 className="mt-4 text-3xl font-bold tracking-tight text-white">
                   Paid Events
                 </h3>
@@ -182,7 +169,6 @@ export default function PricingPage() {
             </div>
 
             <div className="mt-14 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-              {/* Feature 1 */}
               <div className="rounded-2xl border border-[#dce1d5] bg-white p-6 shadow-sm">
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#ff765f]/10 text-[#ff765f]">
                   <BarChart3 className="h-6 w-6" />
@@ -193,20 +179,16 @@ export default function PricingPage() {
                   breakdown, and peak selling windows in real-time.
                 </p>
               </div>
-
-              {/* Feature 2 */}
               <div className="rounded-2xl border border-[#dce1d5] bg-white p-6 shadow-sm">
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#17211b] text-[#d6f94a]">
                   <Users className="h-6 w-6" />
                 </div>
                 <h3 className="mt-4 text-xl font-bold">Up to 10 Gate Agents</h3>
                 <p className="mt-2 text-sm leading-6 text-[#6d766d]">
-                  Invite staff or bouncers to work as gate agents. Give them
+                  Invite staff or volunteers to work as gate agents. Give them
                   scanner-only permissions without sharing financial data.
                 </p>
               </div>
-
-              {/* Feature 3 */}
               <div className="rounded-2xl border border-[#dce1d5] bg-white p-6 shadow-sm">
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#ff765f]/10 text-[#ff765f]">
                   <QrCode className="h-6 w-6" />
@@ -223,7 +205,6 @@ export default function PricingPage() {
           </div>
         </section>
 
-        {/* Call to Action Banner */}
         <section className="mx-3 my-16 md:mx-6">
           <div className="grain relative overflow-hidden rounded-4xl bg-black px-8 py-16 text-center text-white md:px-16 md:py-20">
             <h2 className="display text-4xl font-bold tracking-tight md:text-6xl">
@@ -231,7 +212,7 @@ export default function PricingPage() {
               <span className="text-[#ff765f]">?</span>
             </h2>
             <p className="mx-auto mt-4 max-w-lg text-base text-neutral-300">
-              Join thousands of organizers using Gada Events to power their
+              Join thousands of organizers using Gada Pass to power their
               concerts, raves, and conferences.
             </p>
             <div className="mt-8 flex justify-center">

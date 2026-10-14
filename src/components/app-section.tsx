@@ -10,7 +10,7 @@ export function MobileAppSection() {
       <div className="relative overflow-hidden rounded-4xl bg-[#121214] px-6 py-12 text-white sm:px-10 md:px-16 md:py-20">
         <div className="pointer-events-none absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_center,var(--tw-gradient-stops))] from-white via-transparent to-transparent" />
 
-        <div className="relative z-10 grid gap-12 lg:grid-cols-2 lg:items-center">
+        <div className="max-w-7xl mx-auto relative z-10 grid gap-12 lg:grid-cols-2 lg:items-center">
           <div className="flex flex-col items-center text-center lg:items-start lg:text-left">
             <h2 className="display text-4xl font-bold tracking-tight text-white sm:text-5xl md:text-6xl">
               Download Our App

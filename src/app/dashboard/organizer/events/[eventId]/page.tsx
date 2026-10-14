@@ -80,7 +80,6 @@ export default function OrganizerTicketsAccessPage({
         />
       </div>
 
-      {/* QUICK MANAGEMENT MODULES */}
       <div className="grid gap-6 md:grid-cols-2">
         <div className="rounded-2xl border border-[#dce1d5] bg-[#fffef9] p-6 space-y-4 shadow-sm">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#ff765f]/10 text-[#ff765f]">

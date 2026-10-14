@@ -108,7 +108,6 @@ export function OtpInput({
 
   return (
     <div className="space-y-3">
-      {/* Input Boxes Grid */}
       <div className="relative">
         <div className="flex items-center justify-between gap-2 sm:gap-3">
           {Array.from({ length }).map((_, index) => (
