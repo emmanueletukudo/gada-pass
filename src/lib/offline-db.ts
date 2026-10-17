@@ -46,7 +46,7 @@ export async function initOfflineDB() {
   });
 }
 
-export async function queueOfflineCheckIn(ticketId: string, eventId: string) {
+export async function queueOfflineCheckIn(ticketId: string, eventId: string, scanMod: 'IN' | "OUT") {
   const db = await initOfflineDB();
   await db.add('outbox', {
     ticketId,

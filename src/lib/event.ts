@@ -8,6 +8,9 @@ export interface CreateTicketTierInput {
   price: number;
   quantity: number;
   description?: string;
+  isMultiDay?: boolean;
+  maxScansPerDay?: number;
+  validDate?: string;
   currency?: string;
   salesStart?: string;
   salesEnd?: string;
@@ -81,6 +84,114 @@ export type verifyBankAccountReponse = {
   bankCode: string;
 };
 
+// export const createEvent = async (input: CreateEventInput) => {
+//   try {
+//     let uploadedUrls: string[] = [];
+
+//     if (input.images && input.images.length > 0) {
+//       uploadedUrls = await Promise.all(
+//         input.images.map((file) => uploadFileToR2(file)),
+//       );
+//     }
+
+//     const createdEvent = await api<{ id: string }>('/events', {
+//       method: 'POST',
+//       headers: {
+//         'Content-Type': 'application/json',
+//       },
+//       body: JSON.stringify({
+//         name: input.name,
+//         description: input.description,
+//         eventType: input.eventType,
+//         slug: input.slug || undefined,
+//         coverFees: input.coverFees ?? false,
+//         categoryId: input.categoryId || undefined,
+//         city: input.city || undefined,
+//         venue: input.venue || undefined,
+//         startsAt: new Date(input.startsAt).toISOString(),
+//         endsAt: new Date(input.endsAt).toISOString(),
+//         capacity: Number(input.capacity ?? 100),
+//         isOnline: input.isOnline ?? false,
+//         meetingLink: input.meetingLink || undefined,
+//         virtualPlatform: input.virtualPlatform || undefined,
+//         meetingPasscode: input.meetingPasscode || undefined,
+//         settlementAccountId: input.settlementAccountId || undefined,
+//         instagram: input.instagram || undefined,
+//         x: input.x || undefined,
+//         website: input.website || undefined,
+//         images: uploadedUrls,
+//         banner: uploadedUrls[0] ?? input.banner,
+//         ticketTiers: input.ticketTiers.map((tier) => ({
+//           name: tier.name,
+//           price: String(tier.price),
+//           quantity: Number(tier.quantity),
+//           currency: tier.currency ?? 'NGN',
+//         })),
+//       }),
+//     });
+
+//     return createdEvent;
+//   } catch (error) {
+//     const message = formatErrorMessage(error, 'Could not create event');
+//     toast.error(message);
+//     throw error;
+//   }
+// };
+
+// export const updateEvent = async (eventId: string, input: EventUpdateInput) => {
+//   try {
+//          console.log('Submitting event update with values:', input);
+//     let imageUrls: string[] = [];
+
+//     if (input.images && input.images.length > 0) {
+//       imageUrls = await Promise.all(
+//         input.images.map((file) => uploadFileToR2(file)),
+//       );
+//     }
+//     const updatedEvent = await api<CreateEventResponse>(
+//       `/organizer/events/${eventId}/update`,
+//       {
+//         method: 'PATCH',
+//         body: JSON.stringify({
+//           name: input.name,
+//           description: input.description,
+//           eventType: input.eventType,
+//           city: input.city,
+//           categoryId: input.categoryId,
+//           coverFees: input.coverFees ?? false,
+//           venue: input.venue,
+//           startsAt: new Date(input.startsAt).toISOString(),
+//           endsAt: new Date(input.endsAt).toISOString(),
+//           isOnline: input.isOnline ?? false,
+//           meetingLink: input.meetingLink || undefined,
+//           virtualPlatform: input.virtualPlatform || undefined,
+//           meetingPasscode: input.meetingPasscode || undefined,
+//           capacity: input.capacity,
+//           settlementAccountId: input.settlementAccountId || undefined,
+//           instagram: input.instagram || undefined,
+//           x: input.x || undefined,
+//           website: input.website || undefined,
+//           images: imageUrls,
+//           banner: imageUrls[0] ?? input.banner,
+//           ticketTiers: input.ticketTiers.map((tier) => ({
+//             id: tier.id,
+//             name: tier.name,
+//             price: String(tier.price),
+//             quantity: Number(tier.quantity),
+//             currency: tier.currency ?? 'NGN',
+//           })),
+//         }),
+//       },
+//     );
+
+//     return updatedEvent;
+//   } catch (error) {
+//     const message = formatErrorMessage(error, 'Could not update the event');
+//     toast.error(message);
+//   }
+// };
+
+
 export const createEvent = async (input: CreateEventInput) => {
   try {
     let uploadedUrls: string[] = [];
@@ -123,6 +234,9 @@ export const createEvent = async (input: CreateEventInput) => {
           price: String(tier.price),
           quantity: Number(tier.quantity),
           currency: tier.currency ?? 'NGN',
+          isMultiDay: tier.isMultiDay ?? false,
+          maxScansPerDay: tier.maxScansPerDay ? Number(tier.maxScansPerDay) : 1,
+          validDate: tier.validDate || undefined,
         })),
       }),
     });
@@ -137,7 +251,7 @@ export const createEvent = async (input: CreateEventInput) => {
 
 export const updateEvent = async (eventId: string, input: EventUpdateInput) => {
   try {
-         console.log('Submitting event update with values:', input);
+    console.log('Submitting event update with values:', input);
     let imageUrls: string[] = [];
 
     if (input.images && input.images.length > 0) {
@@ -176,6 +290,11 @@ export const updateEvent = async (eventId: string, input: EventUpdateInput) => {
             price: String(tier.price),
             quantity: Number(tier.quantity),
             currency: tier.currency ?? 'NGN',
+            isMultiDay: tier.isMultiDay ?? false,
+            maxScansPerDay: tier.maxScansPerDay
+              ? Number(tier.maxScansPerDay)
+              : 1,
+            validDate: tier.validDate || undefined,
           })),
         }),
       },
@@ -187,7 +306,6 @@ export const updateEvent = async (eventId: string, input: EventUpdateInput) => {
     toast.error(message);
   }
 };
-
 export const getEventCategories = async () => {
   try {
     const res = await api<EventCategory[]>('/event-categories', {

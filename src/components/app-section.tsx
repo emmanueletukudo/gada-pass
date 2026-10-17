@@ -16,7 +16,7 @@ export function MobileAppSection() {
               Download Our App
             </h2>
             <p className="mt-4 max-w-md text-sm leading-relaxed text-neutral-400 sm:text-base">
-              Create, publish, and manage your events on the go via the mobile
+              Gada Pass is coming soon on app stores. <br />You'd be able to create, publish, and manage your events on the go via the mobile
               app.
             </p>
 
@@ -24,6 +24,7 @@ export function MobileAppSection() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                disabled
                 className="overflow-hidden rounded-xl transition-transform"
               >
                 <Image
@@ -38,6 +39,7 @@ export function MobileAppSection() {
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
+                disabled
                 className="overflow-hidden rounded-xl transition-transform"
               >
                 <Image
