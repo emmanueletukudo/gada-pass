@@ -4,8 +4,8 @@ import { FC } from 'react';
 
 type LogoProps = {
   styles?: string;
-  width: number;
-  hieght: number;
+  width?: number;
+  hieght?: number;
 };
 export const Logo: FC<LogoProps> = ({ styles, width = 120, hieght=60 }) => {
   return (
