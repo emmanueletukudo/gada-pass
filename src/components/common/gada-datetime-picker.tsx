@@ -17,7 +17,7 @@ interface GadaDateTimePickerProps<TFieldValues extends FieldValues> {
   label: string;
   error?: string;
   required?: boolean;
-  minDate?: Date; 
+  minDate?: Date;
 }
 
 const MONTHS = [
@@ -97,7 +97,7 @@ export function GadaDateTimePicker<TFieldValues extends FieldValues>({
 
         return (
           <div className="relative space-y-1">
-            <label className="text-md tracking-wider text-[#6d766d]">
+            <label className="text-md tracking-wider text-[#6d766d] my-1.5 ">
               {label} {required && <span className="text-[#c34837]">*</span>}
             </label>
 
@@ -105,7 +105,7 @@ export function GadaDateTimePicker<TFieldValues extends FieldValues>({
               ref={triggerRef}
               type="button"
               onClick={handleToggle}
-              className="flex w-full items-center justify-between rounded-2xl border border-[#dce1d5] bg-[#fffef9] px-4 py-3 text-xs font-semibold text-[#17211b] outline-none transition hover:border-[#17211b]"
+              className="flex w-full items-center justify-between rounded-xl border border-[#dce1d5] bg-[#fffef9] px-4 py-3.5 text-sm  text-[#17211b] outline-none transition hover:border-[#17211b]"
             >
               <span>{value ? formattedDisplay : 'Select Date & Time'}</span>
               <CalendarIcon className="h-4 w-4 text-[#6d766d]" />
@@ -120,8 +120,8 @@ export function GadaDateTimePicker<TFieldValues extends FieldValues>({
                   onClick={() => setIsOpen(false)}
                 />
                 <div
-                  className={`absolute left-0 z-50 w-full max-w-90 rounded-3xl border border-[#232527] bg-[#141517] p-5 text-white shadow-2xl ${
-                    placement === 'up' ? 'bottom-full -mb-5' : 'top-full'
+                  className={`absolute left-0 z-50 w-80 rounded-3xl border border-[#232527] bg-[#141517] p-4 text-white shadow-2xl ${
+                    placement === 'up' ? 'bottom-full -mb-2' : 'top-full mt-2'
                   }`}
                 >
                   <DateTimePickerCard
@@ -220,13 +220,13 @@ function DateTimePickerCard({
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <div>
         <span className="text-[10px] font-bold uppercase tracking-widest text-[#71767b]">
           Event Date
         </span>
-        <div className="mt-1 flex items-center justify-between">
-          <h3 className="text-lg font-bold text-white">
+        <div className="mt-0.5 flex items-center justify-between">
+          <h3 className="text-base font-bold text-white">
             {date.toLocaleDateString('en-US', {
               weekday: 'short',
               month: 'short',
@@ -234,7 +234,7 @@ function DateTimePickerCard({
               year: 'numeric',
             })}
           </h3>
-          <span className="text-base font-bold text-[#d6f94a]">
+          <span className="text-sm font-bold text-[#d6f94a]">
             {date.toLocaleTimeString('en-US', {
               hour: '2-digit',
               minute: '2-digit',
@@ -249,7 +249,7 @@ function DateTimePickerCard({
         <button
           type="button"
           onClick={() => setViewDate(new Date(year, month - 1, 1))}
-          className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#2b2f33] bg-[#1a1c1e] hover:bg-[#25282c] transition"
+          className="flex h-8 w-8 items-center justify-center rounded-xl border border-[#2b2f33] bg-[#1a1c1e] hover:bg-[#25282c] transition"
         >
           <ChevronLeft className="h-4 w-4 text-white" />
         </button>
@@ -261,7 +261,7 @@ function DateTimePickerCard({
               onChange={(e) =>
                 setViewDate(new Date(year, Number(e.target.value), 1))
               }
-              className="appearance-none rounded-xl border border-[#2b2f33] bg-[#1a1c1e] py-2 pl-3 pr-8 text-xs font-bold text-white outline-none cursor-pointer"
+              className="appearance-none rounded-xl border border-[#2b2f33] bg-[#1a1c1e] py-1.5 pl-3 pr-7 text-xs font-bold text-white outline-none cursor-pointer"
             >
               {MONTHS.map((m, idx) => (
                 <option key={m} value={idx}>
@@ -269,7 +269,7 @@ function DateTimePickerCard({
                 </option>
               ))}
             </select>
-            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#71767b]" />
+            <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#71767b]" />
           </div>
 
           <div className="relative">
@@ -278,7 +278,7 @@ function DateTimePickerCard({
               onChange={(e) =>
                 setViewDate(new Date(Number(e.target.value), month, 1))
               }
-              className="appearance-none rounded-xl border border-[#2b2f33] bg-[#1a1c1e] py-2 pl-3 pr-8 text-xs font-bold text-white outline-none cursor-pointer"
+              className="appearance-none rounded-xl border border-[#2b2f33] bg-[#1a1c1e] py-1.5 pl-3 pr-7 text-xs font-bold text-white outline-none cursor-pointer"
             >
               {[2025, 2026, 2027, 2028, 2029, 2030].map((y) => (
                 <option key={y} value={y}>
@@ -286,21 +286,21 @@ function DateTimePickerCard({
                 </option>
               ))}
             </select>
-            <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#71767b]" />
+            <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#71767b]" />
           </div>
         </div>
 
         <button
           type="button"
           onClick={() => setViewDate(new Date(year, month + 1, 1))}
-          className="flex h-9 w-9 items-center justify-center rounded-xl border border-[#2b2f33] bg-[#1a1c1e] hover:bg-[#25282c] transition"
+          className="flex h-8 w-8 items-center justify-center rounded-xl border border-[#2b2f33] bg-[#1a1c1e] hover:bg-[#25282c] transition"
         >
           <ChevronRight className="h-4 w-4 text-white" />
         </button>
       </div>
 
       <div>
-        <div className="grid grid-cols-7 text-center text-xs font-semibold text-[#8b939b] mb-2">
+        <div className="grid grid-cols-7 text-center text-xs font-semibold text-[#8b939b] mb-1">
           <span>Su</span>
           <span>Mo</span>
           <span>Tu</span>
@@ -310,7 +310,7 @@ function DateTimePickerCard({
           <span>Sa</span>
         </div>
 
-        <div className="grid grid-cols-7 gap-y-1 text-center text-xs font-bold">
+        <div className="grid grid-cols-7 gap-y-0.5 text-center text-xs font-bold">
           {daysInMonth.map(({ day, isCurrentMonth }, idx) => {
             const disabled = isDayDisabled(day, isCurrentMonth);
             const isSelected =
@@ -325,7 +325,7 @@ function DateTimePickerCard({
                 type="button"
                 disabled={disabled}
                 onClick={() => updateDate(day)}
-                className={`mx-auto flex h-9 w-9 items-center justify-center rounded-xl transition ${
+                className={`mx-auto flex h-8 w-8 items-center justify-center rounded-xl transition ${
                   isSelected
                     ? 'bg-[#d6f94a] text-black font-bold shadow-md'
                     : disabled
@@ -340,16 +340,16 @@ function DateTimePickerCard({
         </div>
       </div>
 
-      <div className="flex items-center justify-between gap-2 border-t border-[#232527] pt-4">
-        <div className="flex items-center gap-2 rounded-2xl border border-[#2b2f33] bg-[#1a1c1e] px-3 py-2">
+      <div className="flex items-center justify-between gap-1.5 border-t border-[#232527] pt-3">
+        <div className="flex items-center gap-1.5 rounded-xl border border-[#2b2f33] bg-[#1a1c1e] px-2 py-1.5">
           <button
             type="button"
             onClick={() => updateHours(-1)}
             className="text-[#8b939b] hover:text-white transition"
           >
-            <Minus className="h-3.5 w-3.5" />
+            <Minus className="h-3 w-3" />
           </button>
-          <span className="w-6 text-center font-mono text-sm font-bold text-white">
+          <span className="w-5 text-center font-mono text-xs font-bold text-white">
             {String(displayHours).padStart(2, '0')}
           </span>
           <button
@@ -357,21 +357,21 @@ function DateTimePickerCard({
             onClick={() => updateHours(1)}
             className="text-[#8b939b] hover:text-white transition"
           >
-            <Plus className="h-3.5 w-3.5" />
+            <Plus className="h-3 w-3" />
           </button>
         </div>
 
         <span className="text-sm font-bold text-[#8b939b]">:</span>
 
-        <div className="flex items-center gap-2 rounded-2xl border border-[#2b2f33] bg-[#1a1c1e] px-3 py-2">
+        <div className="flex items-center gap-1.5 rounded-xl border border-[#2b2f33] bg-[#1a1c1e] px-2 py-1.5">
           <button
             type="button"
             onClick={() => updateMinutes(-5)}
             className="text-[#8b939b] hover:text-white transition"
           >
-            <Minus className="h-3.5 w-3.5" />
+            <Minus className="h-3 w-3" />
           </button>
-          <span className="w-6 text-center font-mono text-sm font-bold text-white">
+          <span className="w-5 text-center font-mono text-xs font-bold text-white">
             {String(minutes).padStart(2, '0')}
           </span>
           <button
@@ -379,15 +379,15 @@ function DateTimePickerCard({
             onClick={() => updateMinutes(5)}
             className="text-[#8b939b] hover:text-white transition"
           >
-            <Plus className="h-3.5 w-3.5" />
+            <Plus className="h-3 w-3" />
           </button>
         </div>
 
-        <div className="flex rounded-2xl border border-[#2b2f33] bg-[#1a1c1e] p-1">
+        <div className="flex rounded-xl border border-[#2b2f33] bg-[#1a1c1e] p-0.5">
           <button
             type="button"
             onClick={() => toggleAmPm(false)}
-            className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${
+            className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition ${
               !isPm ? 'bg-[#2f3337] text-white' : 'text-[#71767b]'
             }`}
           >
@@ -396,7 +396,7 @@ function DateTimePickerCard({
           <button
             type="button"
             onClick={() => toggleAmPm(true)}
-            className={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${
+            className={`rounded-lg px-2.5 py-1 text-[11px] font-bold transition ${
               isPm ? 'bg-[#2f3337] text-white' : 'text-[#71767b]'
             }`}
           >

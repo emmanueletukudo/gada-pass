@@ -211,8 +211,8 @@ export function Step1Details({ form }: Step1DetailsProps) {
             onChange={(val) =>
               setValue('description', val || '', { shouldValidate: true })
             }
-            preview="edit"
-            height={220}
+            preview="edit" // Keeps it as a single full-width editor with a formatting toolbar
+            height={240}
           />
         </div>
         {errors.description && (

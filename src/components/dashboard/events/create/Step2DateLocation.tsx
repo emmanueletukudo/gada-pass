@@ -1,8 +1,15 @@
 'use client';
 
 import { UseFormReturn } from 'react-hook-form';
-import { Globe, Instagram, X as TwitterIcon, Video, Key } from 'lucide-react';
-import { GadaCitySelect, GadaInput } from '@/components/common/gada-inputs';
+import {
+  Globe,
+  Instagram,
+  X as TwitterIcon,
+  Video,
+  Key,
+  MapPin,
+} from 'lucide-react';
+import { GadaInput } from '@/components/common/gada-inputs';
 import { GadaDateTimePicker } from '@/components/common/gada-datetime-picker';
 import { EventFormValues } from './schema';
 import { GadaCategories } from './gada-categories';
@@ -101,18 +108,26 @@ export function Step2DateLocation({ form }: Step2Props) {
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
-          <GadaCitySelect
-            control={control}
-            name="city"
-            error={errors.city?.message}
-          />
+          <div className="relative">
+            <MapPin className="absolute left-3 top-12 h-4 w-4 text-[#6d766d]" />
+            <GadaInput
+              register={register}
+              name="city"
+              label="City"
+              type="text"
+              placeHolder="e.g. Lagos, Abuja, Uyo"
+              styles="pl-9"
+              required
+              error={errors.city?.message}
+            />
+          </div>
 
           <GadaInput
             register={register}
             name="venue"
             label="Venue Address / Name"
             type="text"
-            placeHolder="e.g. Victoria Island, Lagos"
+            placeHolder="e.g. Eko Hotel, Victoria Island"
             required
             error={errors.venue?.message}
           />
