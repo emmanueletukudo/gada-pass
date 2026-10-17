@@ -5,17 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
-import {
-  ArrowLeft,
-  ChevronRight,
-  Sparkles,
-  Users,
-  Calendar,
-  Video,
-  PartyPopper,
-  Music,
-  ArrowRight,
-} from 'lucide-react';
+import { ArrowLeft, ChevronRight, ArrowRight } from 'lucide-react';
 
 import { PaymentSettingsStep } from '@/components/dashboard/events/payment';
 import { eventFormSchema, EventFormValues, STEP_FIELDS } from './schema';
@@ -27,8 +17,6 @@ import { EventFormDataPreview } from '../preview/types';
 import { EventPreviewStep } from '../preview';
 import { createEvent, publishEvent } from '@/lib/event';
 import { EVENT_TYPES } from './types';
-
-
 
 const STEP_LABELS = [
   'Event Type',
@@ -63,7 +51,15 @@ export default function CreateEventMultiStepPage() {
       instagram: '',
       x: '',
       website: '',
-      ticketTiers: [{ name: 'Regular Pass', price: 0, quantity: 100 }],
+      ticketTiers: [
+        {
+          name: 'Regular Pass',
+          price: 0,
+          quantity: 100,
+          isMultiDay: false,
+          maxScansPerDay: 1,
+        },
+      ],
       settlementAccountId: '',
       settlementAccount: {},
     },
@@ -92,81 +88,81 @@ export default function CreateEventMultiStepPage() {
     setStep((prev) => Math.max(prev - 1, 1));
   };
 
- const onFinalSubmit = async (values: EventFormValues) => {
-   setIsSubmitting(true);
-   try {
-     const imageFiles: File[] = values.coverImageFiles ?? [];
-     const createdEvent = await createEvent({
-       name: values.title,
-       description: values.description,
-       categoryId: values.categoryId as string,
-       city: values.city,
-       venue: values.venue,
-       startsAt: values.startDate,
-       endsAt: values.endDate,
-       capacity: values.capacity,
-       isOnline: values.eventType === 'ONLINE_EVENT',
-       meetingLink: values.meetingLink,
-       virtualPlatform: values.virtualPlatform,
-       meetingPasscode: values.meetingPasscode,
-       settlementAccountId:
-         values.eventType === 'FREE_EVENT'
-           ? undefined
-           : values.settlementAccountId,
-       instagram: values.instagram,
-       x: values.x,
-       website: values.website,
-       images: imageFiles,
-       ticketTiers: values.ticketTiers,
-       slug: values.slug,
-       coverFees: values.coverFees,
-       eventType: values.eventType,
-     });
+  const onFinalSubmit = async (values: EventFormValues) => {
+    setIsSubmitting(true);
+    try {
+      const imageFiles: File[] = values.coverImageFiles ?? [];
+      const createdEvent = await createEvent({
+        name: values.title,
+        description: values.description,
+        categoryId: values.categoryId as string,
+        city: values.city,
+        venue: values.venue,
+        startsAt: values.startDate,
+        endsAt: values.endDate,
+        capacity: values.capacity,
+        isOnline: values.eventType === 'ONLINE_EVENT',
+        meetingLink: values.meetingLink,
+        virtualPlatform: values.virtualPlatform,
+        meetingPasscode: values.meetingPasscode,
+        settlementAccountId:
+          values.eventType === 'FREE_EVENT'
+            ? undefined
+            : values.settlementAccountId,
+        instagram: values.instagram,
+        x: values.x,
+        website: values.website,
+        images: imageFiles,
+        ticketTiers: values.ticketTiers,
+        slug: values.slug,
+        coverFees: values.coverFees,
+        eventType: values.eventType,
+      });
 
-     await publishEvent(createdEvent.id);
-     toast.success('Your experience is now live on Gada Pass!');
-     router.push('/dashboard/organizer/events');
-   } catch (err) {
-     console.error('Failed to create event:', err);
-     toast.error('Failed to create event. Please check your inputs.');
-   } finally {
-     setIsSubmitting(false);
-   }
- };
+      await publishEvent(createdEvent.id);
+      toast.success('Your experience is now live on Gada Pass!');
+      router.push('/dashboard/organizer/events');
+    } catch (err) {
+      console.error('Failed to create event:', err);
+      toast.error('Failed to create event. Please check your inputs.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
- const currentFormValues = watch();
- const previewDataAdapter: EventFormDataPreview = {
-   title: currentFormValues.title || 'Untitled Event',
-   category:
-     currentFormValues.categoryId || currentFormValues.eventType || 'General',
-   description: currentFormValues.description || '',
-   coverImageUrl: currentFormValues.coverImageUrl,
-   startDate: currentFormValues.startDate,
-   endDate: currentFormValues.endDate || currentFormValues.startDate,
-   locationType:
-     currentFormValues.eventType === 'ONLINE_EVENT' ? 'ONLINE' : 'VENUE',
-   eventType: currentFormValues.eventType,
-   slug: currentFormValues.slug,
-   coverFees: currentFormValues.coverFees,
-   meetingLink: currentFormValues.meetingLink,
-   virtualPlatform: currentFormValues.virtualPlatform,
-   meetingPasscode: currentFormValues.meetingPasscode,
-   settlementAccountId: currentFormValues.settlementAccountId,
-   venueName: currentFormValues.venue,
-   venueAddress: currentFormValues.venue,
-   ticketTiers: (currentFormValues.ticketTiers || []).map((tier, idx) => ({
-     id: String(idx),
-     name: tier.name,
-     price: Number(tier.price),
-     quantity: Number(tier.quantity),
-   })),
-   settlementAccount: currentFormValues.settlementAccount && {
-     bankName: currentFormValues.settlementAccount.bankName,
-     accountName: currentFormValues.settlementAccount.accountName,
-     accountNumber: currentFormValues.settlementAccount.accountNumber,
-   },
-   isPublic: true,
- };
+  const currentFormValues = watch();
+  const previewDataAdapter: EventFormDataPreview = {
+    title: currentFormValues.title || 'Untitled Event',
+    category:
+      currentFormValues.categoryId || currentFormValues.eventType || 'General',
+    description: currentFormValues.description || '',
+    coverImageUrl: currentFormValues.coverImageUrl,
+    startDate: currentFormValues.startDate,
+    endDate: currentFormValues.endDate || currentFormValues.startDate,
+    locationType:
+      currentFormValues.eventType === 'ONLINE_EVENT' ? 'ONLINE' : 'VENUE',
+    eventType: currentFormValues.eventType,
+    slug: currentFormValues.slug,
+    coverFees: currentFormValues.coverFees,
+    meetingLink: currentFormValues.meetingLink,
+    virtualPlatform: currentFormValues.virtualPlatform,
+    meetingPasscode: currentFormValues.meetingPasscode,
+    settlementAccountId: currentFormValues.settlementAccountId,
+    venueName: currentFormValues.venue,
+    venueAddress: currentFormValues.venue,
+    ticketTiers: (currentFormValues.ticketTiers || []).map((tier, idx) => ({
+      id: String(idx),
+      name: tier.name,
+      price: Number(tier.price),
+      quantity: Number(tier.quantity),
+    })),
+    settlementAccount: currentFormValues.settlementAccount && {
+      bankName: currentFormValues.settlementAccount.bankName,
+      accountName: currentFormValues.settlementAccount.accountName,
+      accountNumber: currentFormValues.settlementAccount.accountNumber,
+    },
+    isPublic: true,
+  };
 
   return (
     <div className="mx-auto mt-10 max-w-5xl px-4 pb-16">

@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useFieldArray, UseFormReturn } from 'react-hook-form';
-import { Plus, Trash2, Sparkles, Tag } from 'lucide-react';
+import { Plus, Trash2, Sparkles, Tag, Calendar, RefreshCw } from 'lucide-react';
 import { GadaInput } from '@/components/common/gada-inputs';
 import { EventFormValues } from './schema';
 
@@ -22,11 +22,10 @@ export function Step3Tickets({ form }: Step3Props) {
   const eventType = watch('eventType');
   const isFreeEvent = eventType === 'FREE_EVENT';
 
-  const { fields, append, remove, replace } = useFieldArray({
+  const { fields, append, remove } = useFieldArray({
     control,
     name: 'ticketTiers',
   });
-
 
   useEffect(() => {
     if (isFreeEvent) {
@@ -36,8 +35,19 @@ export function Step3Tickets({ form }: Step3Props) {
     }
   }, [isFreeEvent, fields.length, setValue]);
 
-  const addPresetTier = (name: string, price: number, quantity: number) => {
-    append({ name, price: isFreeEvent ? 0 : price, quantity });
+  const addPresetTier = (
+    name: string,
+    price: number,
+    quantity: number,
+    isMultiDay = false,
+  ) => {
+    append({
+      name,
+      price: isFreeEvent ? 0 : price,
+      quantity,
+      isMultiDay,
+      maxScansPerDay: 1,
+    });
   };
 
   return (
@@ -57,7 +67,7 @@ export function Step3Tickets({ form }: Step3Props) {
           <p className="text-xs text-[#6d766d]">
             {isFreeEvent
               ? 'Free events automatically set ticket prices to ₦0. Define pass titles and allocations.'
-              : 'Define the pricing structure and available quantity for each ticket type.'}
+              : 'Define pricing, quantities, and multi-day access rules for each ticket tier.'}
           </p>
         </div>
 
@@ -68,6 +78,8 @@ export function Step3Tickets({ form }: Step3Props) {
               name: isFreeEvent ? 'Free Access Pass' : '',
               price: 0,
               quantity: 100,
+              isMultiDay: false,
+              maxScansPerDay: 1,
             })
           }
           className="inline-flex items-center gap-1.5 self-start rounded-full border border-[#17211b] px-4 py-2 text-xs font-bold text-[#17211b] transition hover:bg-[#17211b]/5 sm:self-auto"
@@ -98,10 +110,12 @@ export function Step3Tickets({ form }: Step3Props) {
           </button>
           <button
             type="button"
-            onClick={() => addPresetTier('VVIP Table (Group of 5)', 150000, 5)}
+            onClick={() =>
+              addPresetTier('3-Day All Access Pass', 45000, 100, true)
+            }
             className="rounded-full bg-[#f7f7f2] border border-[#dce1d5] px-3 py-1 text-[11px] font-bold text-[#17211b] hover:border-[#17211b]"
           >
-            + VVIP Table (₦150k)
+            + 3-Day All Access (₦45k)
           </button>
         </div>
       )}
@@ -113,62 +127,111 @@ export function Step3Tickets({ form }: Step3Props) {
       )}
 
       <div className="space-y-4">
-        {fields.map((field, index) => (
-          <div
-            key={field.id}
-            className="flex flex-col gap-4 rounded-2xl border border-[#dce1d5] bg-[#fffef9] p-4 sm:flex-row sm:items-start"
-          >
-            <div className="grid flex-1 grid-cols-1 gap-3 sm:grid-cols-3">
-              <GadaInput
-                type="text"
-                register={register}
-                name={`ticketTiers.${index}.name`}
-                label="Tier Title"
-                placeHolder={isFreeEvent ? 'e.g. Free Pass' : 'e.g. VIP Pass'}
-                required
-                error={errors.ticketTiers?.[index]?.name?.message}
-              />
+        {fields.map((field, index) => {
+          const isMultiDay = watch(`ticketTiers.${index}.isMultiDay`);
 
-              <div className="relative">
+          return (
+            <div
+              key={field.id}
+              className="flex flex-col gap-4 rounded-2xl border border-[#dce1d5] bg-[#fffef9] p-4"
+            >
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <GadaInput
+                  type="text"
+                  register={register}
+                  name={`ticketTiers.${index}.name`}
+                  label="Tier Title"
+                  placeHolder={isFreeEvent ? 'e.g. Free Pass' : 'e.g. VIP Pass'}
+                  required
+                  error={errors.ticketTiers?.[index]?.name?.message}
+                />
+
+                <div className="relative">
+                  <GadaInput
+                    register={register}
+                    name={`ticketTiers.${index}.price`}
+                    type="number"
+                    label="Price (₦)"
+                    placeHolder="0"
+                    disabled={isFreeEvent}
+                    required
+                    error={errors.ticketTiers?.[index]?.price?.message}
+                  />
+                  {isFreeEvent && (
+                    <span className="absolute right-3 top-9 text-[10px] font-extrabold uppercase text-[#6d766d]">
+                      FREE
+                    </span>
+                  )}
+                </div>
+
                 <GadaInput
                   register={register}
-                  name={`ticketTiers.${index}.price`}
+                  name={`ticketTiers.${index}.quantity`}
                   type="number"
-                  label="Price (₦)"
-                  placeHolder="0"
-                  disabled={isFreeEvent}
+                  label="Volume Allocation"
+                  placeHolder="100"
                   required
-                  error={errors.ticketTiers?.[index]?.price?.message}
+                  error={errors.ticketTiers?.[index]?.quantity?.message}
                 />
-                {isFreeEvent && (
-                  <span className="absolute right-3 top-9 text-[10px] font-extrabold uppercase text-[#6d766d]">
-                    FREE
-                  </span>
-                )}
               </div>
 
-              <GadaInput
-                register={register}
-                name={`ticketTiers.${index}.quantity`}
-                type="number"
-                label="Volume Allocation"
-                placeHolder="100"
-                required
-                error={errors.ticketTiers?.[index]?.quantity?.message}
-              />
-            </div>
+              {/* Advanced Trade Fair / Multi-Day Controls */}
+              <div className="mt-2 flex flex-col gap-4 rounded-xl border border-dashed border-[#dce1d5] bg-[#f7f7f2] p-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id={`isMultiDay-${index}`}
+                    {...register(`ticketTiers.${index}.isMultiDay`)}
+                    className="h-4 w-4 rounded border-[#dce1d5] text-[#17211b] focus:ring-[#17211b]"
+                  />
+                  <label
+                    htmlFor={`isMultiDay-${index}`}
+                    className="text-xs font-bold text-[#17211b] cursor-pointer flex items-center gap-1.5"
+                  >
+                    <Calendar className="h-3.5 w-3.5 text-[#ff5500]" />
+                    Multi-Day All-Access Pass (Valid across all event dates)
+                  </label>
+                </div>
 
-            {fields.length > 1 && (
-              <button
-                type="button"
-                onClick={() => remove(index)}
-                className="mt-6 self-end rounded-xl border border-[#c34837]/20 p-3 text-[#c34837] transition hover:bg-[#c34837]/5 sm:self-auto"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-        ))}
+                {!isMultiDay && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-semibold text-[#6d766d]">
+                      Valid Date:
+                    </span>
+                    <input
+                      type="date"
+                      {...register(`ticketTiers.${index}.validDate`)}
+                      className="rounded-lg border border-[#dce1d5] bg-white px-2.5 py-1 text-xs text-[#17211b]"
+                    />
+                  </div>
+                )}
+
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-semibold text-[#6d766d] flex items-center gap-1">
+                    <RefreshCw className="h-3 w-3" /> Max Scans/Day:
+                  </span>
+                  <input
+                    type="number"
+                    min={1}
+                    {...register(`ticketTiers.${index}.maxScansPerDay`)}
+                    className="w-16 rounded-lg border border-[#dce1d5] bg-white px-2.5 py-1 text-xs text-[#17211b]"
+                  />
+                </div>
+
+                {fields.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => remove(index)}
+                    className="rounded-lg border border-[#c34837]/20 p-2 text-[#c34837] transition hover:bg-[#c34837]/5"
+                    title="Remove Tier"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

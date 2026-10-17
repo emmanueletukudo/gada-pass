@@ -7,23 +7,6 @@ import { UserPlus, RefreshCw, X, Radio, Clock, Mail } from 'lucide-react';
 import { Agent, AgentInvitation, EventAgentsResponse } from './types';
 import { EventAgentsSkeleton } from '@/components/dashboard/common/event-agents-skeleton';
 
-interface AgentUser {
-  id: string;
-  email: string;
-  firstName?: string;
-  lastName?: string;
-}
-
-interface EventAgent {
-  id: string;
-  eventId: string;
-  userId: string;
-  clearanceLevel: string;
-  isActive: boolean;
-  createdAt: string;
-  user: AgentUser;
-}
-
 interface PageProps {
   params: Promise<{ eventId: string }>;
 }
@@ -34,7 +17,10 @@ export default function EventAgentsPage({ params }: PageProps) {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [invitations, setInvitations] = useState<AgentInvitation[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [revokingId, setRevokingId] = useState<string | null>(null);
+
+  // Separate loading states for revoking active agents vs canceling invites
+  const [revokingAgentId, setRevokingAgentId] = useState<string | null>(null);
+  const [revokingInviteId, setRevokingInviteId] = useState<string | null>(null);
 
   const [showOnboardModal, setShowOnboardModal] = useState(false);
   const [fullName, setFullName] = useState('');
@@ -74,23 +60,41 @@ export default function EventAgentsPage({ params }: PageProps) {
       setFullName('');
       setEmail('');
       fetchData();
-    } catch (error) {
-      toast.error('Failed to send invitation.');
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to send invitation.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleRevokeAgent = async (agentId: string) => {
+  // Revoke an active assigned agent's access
+  const handleRevokeAssignedAgent = async (agentId: string) => {
     try {
-      setRevokingId(agentId);
-      await api(`/agents/invitations/${agentId}`, { method: 'DELETE' });
+      setRevokingAgentId(agentId);
+      // Adjust endpoint if your backend route differs (e.g. PATCH or DELETE on event agents)
+      await api(`/agents/events/${eventId}/agents/${agentId}`, {
+        method: 'DELETE',
+      });
       toast.success('Agent access revoked successfully.');
       fetchData();
-    } catch (error) {
-      toast.error('Failed to revoke access.');
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to revoke agent access.');
     } finally {
-      setRevokingId(null);
+      setRevokingAgentId(null);
+    }
+  };
+
+  // Cancel/Revoke a pending invitation
+  const handleCancelInvitation = async (invitationId: string) => {
+    try {
+      setRevokingInviteId(invitationId);
+      await api(`/agents/invitations/${invitationId}`, { method: 'DELETE' });
+      toast.success('Invitation cancelled successfully.');
+      fetchData();
+    } catch (error: any) {
+      toast.error(error?.message || 'Failed to cancel invitation.');
+    } finally {
+      setRevokingInviteId(null);
     }
   };
 
@@ -202,7 +206,7 @@ export default function EventAgentsPage({ params }: PageProps) {
                         .join(' ') || 'Gate Agent'}
                     </td>
                     <td className="py-3 px-4 text-[#6d766d]">
-                      {agent.user?.email}
+                      {agent.user?.email || 'N/A'}
                     </td>
                     <td className="py-3 px-4 text-[#17211b]">
                       {agent.clearanceLevel || 'Standard'}
@@ -221,11 +225,11 @@ export default function EventAgentsPage({ params }: PageProps) {
                     <td className="py-3 pl-4 text-right">
                       {agent.isActive ? (
                         <button
-                          onClick={() => handleRevokeAgent(agent.id)}
-                          disabled={revokingId === agent.id}
+                          onClick={() => handleRevokeAssignedAgent(agent.id)}
+                          disabled={revokingAgentId === agent.id}
                           className="rounded-lg border border-[#c34837]/20 px-3 py-1 text-xs font-bold text-[#c34837] hover:border-[#c34837] hover:bg-[#c34837]/5 transition-colors disabled:opacity-50"
                         >
-                          {revokingId === agent.id
+                          {revokingAgentId === agent.id
                             ? 'Revoking...'
                             : 'Revoke Access'}
                         </button>
@@ -274,7 +278,9 @@ export default function EventAgentsPage({ params }: PageProps) {
                       {invitation.role || 'Gate Operator'}
                     </td>
                     <td className="py-3 px-4 text-[#6d766d]">
-                      {new Date(invitation.createdAt).toLocaleDateString()}
+                      {invitation.createdAt
+                        ? new Date(invitation.createdAt).toLocaleDateString()
+                        : 'N/A'}
                     </td>
                     <td className="py-3 px-4">
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-700">
@@ -284,10 +290,13 @@ export default function EventAgentsPage({ params }: PageProps) {
                     </td>
                     <td className="py-3 pl-4 text-right">
                       <button
-                        onClick={() => handleRevokeAgent(invitation.id)}
-                        className="rounded-lg border border-[#dce1d5] px-3 py-1 text-xs font-bold text-[#6d766d] hover:bg-[#17211b]/5 transition-colors"
+                        onClick={() => handleCancelInvitation(invitation.id)}
+                        disabled={revokingInviteId === invitation.id}
+                        className="rounded-lg border border-[#dce1d5] px-3 py-1 text-xs font-bold text-[#6d766d] hover:bg-[#17211b]/5 transition-colors disabled:opacity-50"
                       >
-                        Cancel
+                        {revokingInviteId === invitation.id
+                          ? 'Cancelling...'
+                          : 'Cancel'}
                       </button>
                     </td>
                   </tr>
