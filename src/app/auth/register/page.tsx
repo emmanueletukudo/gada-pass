@@ -12,7 +12,7 @@ export default function RegisterPage() {
           for more<span className="text-[#ff765f]">.</span>
         </h2>
         <p className="mt-3 mb-8 text-sm text-[#6d766d]">
-          Create your free Gada Events account.
+          Create your free Gada Pass account.
         </p>
         <AuthForm mode="register" />
         <p className="mt-6 text-center text-sm text-[#6d766d]">

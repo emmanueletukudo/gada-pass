@@ -8,12 +8,11 @@ import { z } from 'zod';
 import { getDashboardPathForRole, register } from '@/lib/auth';
 import { GadaInput } from './common/gada-inputs';
 import { toast } from 'sonner';
-import { getSession, signIn } from 'next-auth/react';
+import { useSession, signIn, getSession } from 'next-auth/react';
 import { UserRole } from '@/types/next-auth';
 import { ArrowLeft, Info, Loader2 } from 'lucide-react';
 import { OtpInput } from './common/otp-input';
 import { api } from '@/lib/api';
-
 
 const getSchema = (mode: 'login' | 'register', step: number) => {
   return z
@@ -62,9 +61,11 @@ type Values = z.infer<ReturnType<typeof getSchema>>;
 
 export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [step, setStep] = useState<number>(1);
   const [isVerifyingOtp, setIsVerifyingOtp] = useState<boolean>(false);
   const [isSendingCode, setIsSendingCode] = useState<boolean>(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState<boolean>(false);
 
   const {
     register: field,
@@ -98,52 +99,51 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
     }
   }, [firstNameValue, setValue, watch]);
 
- const handleOtpComplete = async (otpValue: string) => {
-   setIsVerifyingOtp(true);
-   try {
-     await api('/auth/verify-otp', {
-       method: 'POST',
-       body: JSON.stringify({
-         email: watch('email'),
-         otp: otpValue,
-       }),
-     });
+  // Handle standard authenticated users who don't need OAuth onboarding here
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user) {
+      if (!session.user.isNewUser && session.user.hostName) {
+        const redirectPath = getDashboardPathForRole(
+          session.user.role as UserRole,
+        );
+        router.push(redirectPath);
+      }
+    }
+  }, [status, session, router]);
 
-     toast.success('Email verified successfully!');
-     setStep(3);
-   } catch (err: any) {
-     toast.error(err.message || 'Invalid or expired code');
-     setError('otp', { message: 'Invalid or expired code' });
-   } finally {
-     setIsVerifyingOtp(false);
-   }
- };
+  const handleOtpComplete = async (otpValue: string) => {
+    setIsVerifyingOtp(true);
+    try {
+      await api('/auth/verify-otp', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: watch('email'),
+          otp: otpValue,
+        }),
+      });
 
- const handleResendOtp = async () => {
-   try {
-     await api('/auth/send-otp', {
-       method: 'POST',
-       body: JSON.stringify({
-         email: watch('email'),
-       }),
-     });
+      toast.success('Email verified successfully!');
+      setStep(3);
+    } catch (err: any) {
+      toast.error(err.message || 'Invalid or expired code');
+      setError('otp', { message: 'Invalid or expired code' });
+    } finally {
+      setIsVerifyingOtp(false);
+    }
+  };
 
-     toast.success('A new verification code has been sent!');
-   } catch (err: any) {
-     toast.error(err.message || 'Failed to resend code');
-   }
- };
+  const handleResendOtp = async () => {
+    try {
+      await api('/auth/send-otp', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: watch('email'),
+        }),
+      });
 
-  const handleRedirect = async () => {
-    const session = await getSession();
-    if (session?.user.role) {
-      const redirectPath = getDashboardPathForRole(
-        session.user.role as UserRole,
-      );
-      router.push(redirectPath);
-      router.refresh();
-    } else {
-      router.push('/dashboard');
+      toast.success('A new verification code has been sent!');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to resend code');
     }
   };
 
@@ -208,10 +208,18 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
           toast.error(result.error);
           return;
         }
-        await handleRedirect();
+
+        const currentSession = await getSession();
+        const redirectPath = getDashboardPathForRole(
+          currentSession?.user?.role as UserRole,
+        );
+        router.push(redirectPath);
+        router.refresh();
       } else {
         if (values.password !== values.confirmPassword) {
-          setError('confirmPassword', { message: 'Passwords did not match!' });
+          setError('confirmPassword', {
+            message: 'Passwords did not match!',
+          });
           return;
         }
 
@@ -224,7 +232,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
           hostName: values.hostName!,
           accountType: values.accountType ?? 'INDIVIDUAL',
           role:
-            values.accountType  === 'ORGANIZATION' ? 'ORGANIZER' : 'ATTENDEE',
+            values.accountType === 'ORGANIZATION' ? 'ORGANIZER' : 'ATTENDEE',
         });
 
         toast.success('Account created successfully!');
@@ -241,9 +249,24 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
     }
   };
 
-  const handleGoogleSignIn = () => {
-    signIn('google', { callbackUrl: '/dashboard' });
+  const handleGoogleSignIn = async () => {
+    setIsGoogleLoading(true);
+    // Route Google users directly to the dedicated onboarding page
+    await signIn('google', { callbackUrl: '/auth/onboarding' });
   };
+
+  if (status === 'loading') {
+    return (
+      <div className="w-full space-y-4 animate-pulse">
+        <div className="space-y-1.5">
+          <div className="h-3 w-24 rounded bg-[#e8ebe3]" />
+          <div className="h-12 w-full rounded-2xl bg-[#f0f3eb]" />
+        </div>
+        <div className="h-14 w-full rounded-full bg-[#17211b]/20" />
+        <div className="h-13 w-full rounded-full border border-[#dce1d5] bg-[#fffef9]" />
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit(submit)} className="space-y-4">
@@ -277,28 +300,38 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
               </button>
               <button
                 type="button"
+                disabled={isGoogleLoading}
                 onClick={handleGoogleSignIn}
-                className="flex w-full items-center justify-center gap-3 rounded-full border border-[#dce1d5] bg-[#fffef9] py-3.5 font-bold text-[#17211b] transition hover:bg-[#f7f7f2]"
+                className="flex w-full items-center justify-center gap-3 rounded-full border border-[#dce1d5] bg-[#fffef9] py-3.5 font-bold text-[#17211b] transition hover:bg-[#f7f7f2] disabled:opacity-50"
               >
-                <svg className="h-5 w-5" viewBox="0 0 24 24">
-                  <path
-                    fill="#4285F4"
-                    d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"
-                  />
-                  <path
-                    fill="#34A853"
-                    d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.95H1.2v3.15C3.16 21.37 7.23 24 12 24z"
-                  />
-                  <path
-                    fill="#FBBC05"
-                    d="M5.28 14.25c-.25-.72-.38-1.49-.38-2.25s.13-1.53.38-2.25V6.6H1.2C.43 8.15 0 9.89 0 12s.43 3.85 1.2 5.4l4.08-3.15z"
-                  />
-                  <path
-                    fill="#EA4335"
-                    d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.23 0 3.16 2.63 1.2 6.6l4.08 3.15c.95-2.84 3.6-4.95 6.72-4.95z"
-                  />
-                </svg>
-                Continue with Google
+                {isGoogleLoading ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin text-[#17211b]" />
+                    <span>Connecting to Google...</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="h-5 w-5" viewBox="0 0 24 24">
+                      <path
+                        fill="#4285F4"
+                        d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"
+                      />
+                      <path
+                        fill="#34A853"
+                        d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.95H1.2v3.15C3.16 21.37 7.23 24 12 24z"
+                      />
+                      <path
+                        fill="#FBBC05"
+                        d="M5.28 14.25c-.25-.72-.38-1.49-.38-2.25s.13-1.53.38-2.25V6.6H1.2C.43 8.15 0 9.89 0 12s.43 3.85 1.2 5.4l4.08-3.15z"
+                      />
+                      <path
+                        fill="#EA4335"
+                        d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.23 0 3.16 2.63 1.2 6.6l4.08 3.15c.95-2.84 3.6-4.95 6.72-4.95z"
+                      />
+                    </svg>
+                    <span>Continue with Google</span>
+                  </>
+                )}
               </button>
             </div>
           )}
@@ -500,9 +533,13 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
 
               <button
                 disabled={isSubmitting}
-                className="w-full rounded-full bg-[#17211b] py-4 font-bold text-white disabled:opacity-50 transition hover:bg-[#25332b]"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#17211b] py-4 font-bold text-white disabled:opacity-50 transition hover:bg-[#25332b]"
               >
-                {isSubmitting ? 'Creating account...' : 'Complete Registration'}
+                {isSubmitting ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-[#d6f94a]" />
+                ) : (
+                  <span>Register</span>
+                )}
               </button>
             </div>
           )}
@@ -533,40 +570,48 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
 
           <button
             disabled={isSubmitting}
-            className=" inline-flex w-full items-center justify-center gap-2 w-full rounded-full bg-[#17211b] py-4 font-bold text-white disabled:opacity-50 transition hover:bg-[#25332b]"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#17211b] py-4 font-bold text-white disabled:opacity-50 transition hover:bg-[#25332b]"
           >
             {isSubmitting ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin text-[#d6f94a]" />
-              </>
+              <Loader2 className="h-4 w-4 animate-spin text-[#d6f94a]" />
             ) : (
               <span>Login</span>
             )}
           </button>
           <button
             type="button"
+            disabled={isGoogleLoading}
             onClick={handleGoogleSignIn}
-            className="flex w-full items-center justify-center gap-3 rounded-full border border-[#dce1d5] bg-[#fffef9] py-3.5 font-bold text-[#17211b] transition hover:bg-[#f7f7f2]"
+            className="flex w-full items-center justify-center gap-3 rounded-full border border-[#dce1d5] bg-[#fffef9] py-3.5 font-bold text-[#17211b] transition hover:bg-[#f7f7f2] disabled:opacity-50"
           >
-            <svg className="h-5 w-5" viewBox="0 0 24 24">
-              <path
-                fill="#4285F4"
-                d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"
-              />
-              <path
-                fill="#34A853"
-                d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.95H1.2v3.15C3.16 21.37 7.23 24 12 24z"
-              />
-              <path
-                fill="#FBBC05"
-                d="M5.28 14.25c-.25-.72-.38-1.49-.38-2.25s.13-1.53.38-2.25V6.6H1.2C.43 8.15 0 9.89 0 12s.43 3.85 1.2 5.4l4.08-3.15z"
-              />
-              <path
-                fill="#EA4335"
-                d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.23 0 3.16 2.63 1.2 6.6l4.08 3.15c.95-2.84 3.6-4.95 6.72-4.95z"
-              />
-            </svg>
-            Continue with Google
+            {isGoogleLoading ? (
+              <>
+                <Loader2 className="h-5 w-5 animate-spin text-[#17211b]" />
+                <span>Connecting to Google...</span>
+              </>
+            ) : (
+              <>
+                <svg className="h-5 w-5" viewBox="0 0 24 24">
+                  <path
+                    fill="#4285F4"
+                    d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"
+                  />
+                  <path
+                    fill="#34A853"
+                    d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.95H1.2v3.15C3.16 21.37 7.23 24 12 24z"
+                  />
+                  <path
+                    fill="#FBBC05"
+                    d="M5.28 14.25c-.25-.72-.38-1.49-.38-2.25s.13-1.53.38-2.25V6.6H1.2C.43 8.15 0 9.89 0 12s.43 3.85 1.2 5.4l4.08-3.15z"
+                  />
+                  <path
+                    fill="#EA4335"
+                    d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.23 0 3.16 2.63 1.2 6.6l4.08 3.15c.95-2.84 3.6-4.95 6.72-4.95z"
+                  />
+                </svg>
+                <span>Continue with Google</span>
+              </>
+            )}
           </button>
         </div>
       )}

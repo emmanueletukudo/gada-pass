@@ -7,7 +7,12 @@ declare module 'next-auth' {
       email: string;
       name: string;
       hostName: string;
+      phone?: string;
       accountType: string;
+      firstName?: string;
+      lastName?: string;
+      gender?: 'MALE' | 'FEMALE' | 'OTHER'
+      isNewUser?: boolean;
       role: string;
     };
     accessToken: string;
@@ -17,6 +22,9 @@ declare module 'next-auth' {
     id: string;
     email: string;
     name: string;
+    phone?: string;
+    firstName?: string;
+    lastName?: string;
     hostName: string;
     accountType: string;
     role: string;

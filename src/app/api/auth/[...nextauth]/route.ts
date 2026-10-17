@@ -1,9 +1,15 @@
+import { api } from '@/lib/api';
 import { UserRole } from '@/types/next-auth';
 import NextAuth, { AuthOptions } from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
+import GoogleProvider from 'next-auth/providers/google';
 
 export const authOption: AuthOptions = {
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
     Credentials({
       name: 'Credentials',
       credentials: {
@@ -46,38 +52,76 @@ export const authOption: AuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.accessToken = user.accessToken;
-        token.id = user.id;
-        token.role = user.role;
-        token.hostName = user.hostName,
-        token.accountType = user.accountType,
-        token.accessTokenExpired = Date.now() + 24 * 60 * 60 * 1000
+    async signIn({ account, profile }) {
+      if (account?.provider === 'google') {
+        try {
+          const res = await api<{ accessToken: string }>('/auth/google', {
+            method: 'POST',
+            body: JSON.stringify({
+              idToken: account.id_token,
+              email: profile?.email,
+              firstName: (profile as any)?.given_name,
+              lastName: (profile as any)?.family_name,
+            }),
+          });
+
+          if (res?.accessToken) {
+            account.backendTokens = res;
+            return true;
+          }
+          return false;
+        } catch (error) {
+          console.error('Google Sign-In backend error:', error);
+          return false;
+        }
+      }
+      return true;
+    },
+
+    async jwt({ token, user, account, trigger, session }) {
+      if (trigger === 'update' && session) {
+        const updateData = session as any;
+        return {
+          ...token,
+          accessToken: updateData.accessToken ?? token.accessToken,
+          user: {
+            ...(token.user as object),
+            ...(updateData.user ?? {}),
+          },
+        };
       }
 
-      if (Date.now() < (token.accessTokenExpired as number)) {
-        return token;
+      if (account?.provider === 'google' && account.backendTokens) {
+        const backendRes = account.backendTokens as any;
+        return {
+          ...token,
+          accessToken: backendRes.accessToken,
+          user: {
+            ...backendRes.user,
+            isNewUser: backendRes.isNewUser,
+          },
+        };
       }
-      
-      return {...token, error: "AccessTokenExpired"}
+      if (user) {
+        return {
+          ...token,
+          accessToken: (user as any).accessToken,
+          user: (user as any).user || user,
+        };
+      }
+
+      return token;
     },
+
     async session({ session, token }) {
-      return {
-        ...session,
-        user: {
-          ...session.user,
-          id: token.id as string,
-          role: token.role as UserRole,
-          hostName: token.hostName as string,
-          accountType: token.accountType as string, 
-        },
-        accessToken: token.accessToken as string,
-      };
+      session.accessToken = token.accessToken as string;
+      session.user = token.user as any;
+      return session;
     },
   },
   pages: {
     signIn: '/auth/login',
+    error: '/auth/login',
   },
   session: {
     strategy: 'jwt',
