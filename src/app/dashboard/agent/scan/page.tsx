@@ -10,22 +10,25 @@ import {
   RefreshCw,
   Search,
   UserCheck,
-  AlertTriangle,
   Zap,
+  LogIn,
+  LogOut,
 } from 'lucide-react';
 
 type ScanResult = {
   valid: boolean;
   ticketId: string;
-  attendeeName: string;
-  email: string;
-  tierName: string;
-  eventName: string;
+  attendeeName?: string;
+  email?: string;
+  tierName?: string;
+  eventName?: string;
   checkedInAt?: string;
   message?: string;
+  mode?: 'IN' | 'OUT';
 };
 
 export default function AgentScannerPage() {
+  const [scanMode, setScanMode] = useState<'IN' | 'OUT'>('IN');
   const [manualTicketId, setManualTicketId] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
   const [lastScan, setLastScan] = useState<ScanResult | null>(null);
@@ -41,18 +44,35 @@ export default function AgentScannerPage() {
     setIsVerifying(true);
 
     try {
-      const result = await api<ScanResult>('/agents/verify-ticket', {
+      const result = await api<ScanResult>('/events/check-in', {
         method: 'POST',
-        body: JSON.stringify({ ticketId }),
+        body: JSON.stringify({
+          qrPayload: ticketId,
+          mode: scanMode,
+        }),
       });
 
-      setLastScan(result);
+      const scanResponse: ScanResult = {
+        valid: true,
+        ticketId,
+        attendeeName: result.attendeeName || 'Attendee Recognized',
+        email: result.email || 'N/A',
+        tierName: result.tierName || 'Standard Pass',
+        eventName: result.eventName || 'Gada Pass Event',
+        checkedInAt: result.checkedInAt || new Date().toISOString(),
+        message:
+          scanMode === 'IN'
+            ? 'Access Granted (Checked In)'
+            : 'Exit Recorded (Cleared for Re-Entry)',
+        mode: scanMode,
+      };
 
-      if (result.valid) {
-        toast.success(`Access Granted: ${result.attendeeName}`);
-      } else {
-        toast.error(result.message || 'Invalid or already used ticket');
-      }
+      setLastScan(scanResponse);
+      toast.success(
+        scanMode === 'IN'
+          ? `Access Granted: ${scanResponse.attendeeName}`
+          : `Exit Recorded: ${scanResponse.attendeeName}`,
+      );
     } catch (error) {
       const msg =
         error instanceof Error ? error.message : 'Verification failed';
@@ -65,6 +85,7 @@ export default function AgentScannerPage() {
         tierName: 'N/A',
         eventName: 'N/A',
         message: msg,
+        mode: scanMode,
       });
     } finally {
       setIsVerifying(false);
@@ -74,36 +95,68 @@ export default function AgentScannerPage() {
 
   return (
     <div className="space-y-6">
+      <div className="grid grid-cols-2 gap-3 rounded-2xl bg-[#fffef9] p-2 border border-[#dce1d5] shadow-sm">
+        <button
+          type="button"
+          onClick={() => setScanMode('IN')}
+          className={`flex items-center justify-center gap-2 rounded-xl py-3 text-xs font-black transition ${
+            scanMode === 'IN'
+              ? 'bg-[#17211b] text-white shadow-sm'
+              : 'text-[#6d766d] hover:text-[#17211b] bg-[#f7f7f2]'
+          }`}
+        >
+          <LogIn className="h-4 w-4" />
+          <span>ENTRY MODE (IN)</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setScanMode('OUT')}
+          className={`flex items-center justify-center gap-2 rounded-xl py-3 text-xs font-black transition ${
+            scanMode === 'OUT'
+              ? 'bg-[#ff5500] text-white shadow-sm'
+              : 'text-[#6d766d] hover:text-[#17211b] bg-[#f7f7f2]'
+          }`}
+        >
+          <LogOut className="h-4 w-4" />
+          <span>RE-ENTRY EXIT (OUT)</span>
+        </button>
+      </div>
+
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="rounded-2xl border border-[#dce1d5] bg-[#fffef9] p-5 shadow-sm">
           <div className="flex items-center justify-between text-[#6d766d]">
             <span className="text-xs font-bold uppercase tracking-wider">
-              Checked In
+              Gate Status
             </span>
             <UserCheck className="h-4 w-4 text-[#17211b]" />
           </div>
-          <p className="mt-2 text-3xl font-extrabold text-[#17211b]">142</p>
+          <p className="mt-2 text-2xl font-extrabold text-[#17211b]">
+            {scanMode === 'IN' ? 'Admitting Guests' : 'Processing Exits'}
+          </p>
         </div>
 
         <div className="rounded-2xl border border-[#dce1d5] bg-[#fffef9] p-5 shadow-sm">
           <div className="flex items-center justify-between text-[#6d766d]">
             <span className="text-xs font-bold uppercase tracking-wider">
-              Total Expected
+              Terminal
             </span>
             <QrCode className="h-4 w-4 text-[#17211b]" />
           </div>
-          <p className="mt-2 text-3xl font-extrabold text-[#17211b]">350</p>
+          <p className="mt-2 text-2xl font-extrabold text-[#17211b]">
+            Active Gate
+          </p>
         </div>
 
         <div className="rounded-2xl border border-[#dce1d5] bg-[#d6f94a] p-5 shadow-sm">
           <div className="flex items-center justify-between text-[#17211b]">
             <span className="text-xs font-bold uppercase tracking-wider">
-              Sync Status
+              Scan Mode
             </span>
             <Zap className="h-4 w-4 text-[#17211b]" />
           </div>
           <p className="mt-2 text-sm font-extrabold text-[#17211b]">
-            Live & Synced
+            {scanMode === 'IN' ? 'Entry (IN)' : 'Exit (OUT)'}
           </p>
         </div>
       </div>
@@ -113,10 +166,15 @@ export default function AgentScannerPage() {
           <div className="flex flex-col items-center justify-center rounded-3xl border border-[#dce1d5] bg-[#fffef9] p-8 text-center shadow-sm">
             <div className="relative grid h-48 w-48 place-items-center rounded-2xl border-2 border-dashed border-[#17211b] bg-[#f7f7f2]">
               <QrCode className="h-16 w-16 text-[#6d766d]" />
-              <div className="absolute inset-x-0 top-1/2 h-0.5 bg-[#ff765f] animate-pulse" />
+              <div
+                className={`absolute inset-x-0 top-1/2 h-0.5 animate-pulse ${
+                  scanMode === 'IN' ? 'bg-[#d6f94a]' : 'bg-[#ff5500]'
+                }`}
+              />
             </div>
             <p className="mt-4 text-xs font-bold text-[#6d766d]">
-              Point camera at attendee QR pass or enter code below
+              Point camera at attendee QR pass ({scanMode} mode) or enter code
+              below
             </p>
           </div>
 
@@ -146,35 +204,53 @@ export default function AgentScannerPage() {
             </div>
           </div>
         </div>
+
         <div className="flex flex-col justify-between rounded-3xl border border-[#dce1d5] bg-[#fffef9] p-6 shadow-sm">
           <div>
-            <h2 className="text-sm font-bold uppercase tracking-wider text-[#6d766d]">
-              Last Verification Result
-            </h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-bold uppercase tracking-wider text-[#6d766d]">
+                Last Verification Result
+              </h2>
+              {lastScan?.mode && (
+                <span
+                  className={`rounded-full px-2.5 py-0.5 text-[10px] font-extrabold ${
+                    lastScan.mode === 'IN'
+                      ? 'bg-[#17211b] text-white'
+                      : 'bg-[#ff5500] text-white'
+                  }`}
+                >
+                  {lastScan.mode}
+                </span>
+              )}
+            </div>
 
             {lastScan ? (
               <div className="mt-6 space-y-5">
                 <div
                   className={`flex items-center gap-3 rounded-2xl p-4 ${
                     lastScan.valid
-                      ? 'bg-[#d6f94a]/30 border border-[#d6f94a] text-[#17211b]'
+                      ? lastScan.mode === 'IN'
+                        ? 'bg-[#d6f94a]/30 border border-[#d6f94a] text-[#17211b]'
+                        : 'bg-[#ff5500]/10 border border-[#ff5500] text-[#ff5500]'
                       : 'bg-[#ff765f]/10 border border-[#ff765f] text-[#c34837]'
                   }`}
                 >
                   {lastScan.valid ? (
-                    <CheckCircle2 className="h-8 w-8 shrink-0 text-[#17211b]" />
+                    <CheckCircle2 className="h-8 w-8 shrink-0" />
                   ) : (
                     <XCircle className="h-8 w-8 shrink-0 text-[#c34837]" />
                   )}
                   <div>
                     <h3 className="text-lg font-bold">
-                      {lastScan.valid ? 'VALID TICKET' : 'ACCESS DENIED'}
+                      {lastScan.valid
+                        ? lastScan.mode === 'IN'
+                          ? 'VALID ENTRY'
+                          : 'EXIT RECORDED'
+                        : 'ACCESS DENIED'}
                     </h3>
                     <p className="text-xs font-medium">
                       {lastScan.message ||
-                        (lastScan.valid
-                          ? 'Pass verified successfully.'
-                          : 'Invalid ticket.')}
+                        (lastScan.valid ? 'Pass verified.' : 'Invalid ticket.')}
                     </p>
                   </div>
                 </div>

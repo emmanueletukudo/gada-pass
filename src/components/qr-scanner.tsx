@@ -1,43 +1,77 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { api } from '@/lib/api';
-import { flushOfflineScans, queueOfflineScan } from '@/lib/offline-scans';
-import { CheckCircle2, XCircle, WifiOff, Camera } from 'lucide-react';
+import { queueOfflineCheckIn, getPendingSyncCount } from '@/lib/offline-db';
+import { syncOfflineOutbox } from '@/lib/sync-manager';
+import {
+  CheckCircle2,
+  XCircle,
+  WifiOff,
+  Camera,
+  RefreshCw,
+} from 'lucide-react';
 
-type ScanStatus = 'idle' | 'success' | 'error' | 'queued';
+type ScanStatus = 'idle' | 'success' | 'error' | 'queued' | 'syncing';
 
 interface QrScannerProps {
-  onScanSuccess?: (payload: string) => void;
+  eventId?: string;
+  scanMode?: 'IN' | 'OUT';
+  onScanSuccess?: (payload: string) => Promise<void> | void;
   onScanError?: (error: Error) => void;
 }
 
-export function QrScanner({ onScanSuccess, onScanError }: QrScannerProps) {
+export function QrScanner({
+  eventId,
+  scanMode = 'IN',
+  onScanSuccess,
+  onScanError,
+}: QrScannerProps) {
   const elementId = 'eventsgada-qr-reader';
   const scannerRef = useRef<{ stop: () => Promise<void> } | null>(null);
 
   const [result, setResult] = useState('Point camera at a ticket QR code');
   const [status, setStatus] = useState<ScanStatus>('idle');
   const [isScanning, setIsScanning] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
+
+  const triggerSync = useCallback(async () => {
+    setIsSyncing(true);
+    setStatus('syncing');
+    setResult('Syncing offline scans...');
+
+    try {
+      await syncOfflineOutbox();
+      const pending = await getPendingSyncCount().catch(() => 0);
+
+      if (pending === 0) {
+        setResult('Queued scans synced successfully!');
+        setStatus('success');
+      } else {
+        setResult(`Sync completed · ${pending} scan(s) still pending`);
+        setStatus('idle');
+      }
+    } catch (err) {
+      const pending = await getPendingSyncCount().catch(() => 0);
+      setResult(
+        pending > 0
+          ? `Sync failed · ${pending} queued scan(s) retained`
+          : 'Sync failed · check network connection',
+      );
+      setStatus('error');
+    } finally {
+      setIsSyncing(false);
+    }
+  }, []);
 
   useEffect(() => {
     let active = true;
 
-    const sync = () => {
-      void flushOfflineScans()
-        .then((count) => {
-          if (count) {
-            setResult(`${count} queued scan${count === 1 ? '' : 's'} synced`);
-            setStatus('success');
-          }
-        })
-        .catch(() => {
-          setResult('Sync failed · queued scans retained');
-          setStatus('error');
-        });
+    const handleOnline = () => {
+      void triggerSync();
     };
 
-    window.addEventListener('online', sync);
+    window.addEventListener('online', handleOnline);
 
     void import('html5-qrcode')
       .then(async ({ Html5Qrcode }) => {
@@ -58,36 +92,46 @@ export function QrScanner({ onScanSuccess, onScanError }: QrScannerProps) {
 
             try {
               if (!navigator.onLine) {
-                await queueOfflineScan({
-                  ticketCode: payload,
-                  scannedAt: new Date().toISOString(),
-                  agentId: 'current-agent',
-                });
-                setResult('Queued offline · reconnect to sync');
-                setStatus('queued');
-              } else {
-                const res = await api<{
-                  valid: boolean;
-                  attendeeName?: string;
-                  tierName?: string;
-                }>('/events/check-in', {
-                  method: 'POST',
-                  body: JSON.stringify({ qrPayload: payload }),
-                });
-
+                if (eventId) {
+                  await queueOfflineCheckIn(payload, eventId, scanMode);
+                }
                 setResult(
-                  res.attendeeName
-                    ? `Checked in: ${res.attendeeName} (${res.tierName})`
-                    : 'Valid ticket · Check-in confirmed',
+                  `[OFFLINE ${scanMode}] Queued locally · reconnect to sync`,
                 );
+                setStatus('queued');
+                if (onScanSuccess) {
+                  await onScanSuccess(payload);
+                }
+              } else {
+                if (onScanSuccess) {
+                  await onScanSuccess(payload);
+                } else {
+                  const res = await api<{
+                    valid: boolean;
+                    attendeeName?: string;
+                    tierName?: string;
+                  }>('/events/check-in', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                      qrPayload: payload,
+                      eventId,
+                      mode: scanMode,
+                    }),
+                  });
+
+                  setResult(
+                    res.attendeeName
+                      ? `Checked in: ${res.attendeeName} (${res.tierName || 'Standard'})`
+                      : 'Valid ticket · Check-in confirmed',
+                  );
+                }
                 setStatus('success');
-                onScanSuccess?.(payload);
               }
             } catch (error) {
-              setResult(
-                error instanceof Error ? error.message : 'Invalid ticket',
-              );
-              onScanError?.(error as Error);
+              const errorObj =
+                error instanceof Error ? error : new Error('Invalid ticket');
+              setResult(errorObj.message);
+              onScanError?.(errorObj);
               setStatus('error');
             } finally {
               setTimeout(() => {
@@ -110,12 +154,12 @@ export function QrScanner({ onScanSuccess, onScanError }: QrScannerProps) {
 
     return () => {
       active = false;
-      window.removeEventListener('online', sync);
+      window.removeEventListener('online', handleOnline);
       if (scannerRef.current) {
         void scannerRef.current.stop().catch(() => undefined);
       }
     };
-  }, []);
+  }, [eventId, scanMode, onScanSuccess, onScanError, triggerSync]);
 
   return (
     <div className="w-full space-y-4">
@@ -134,30 +178,48 @@ export function QrScanner({ onScanSuccess, onScanError }: QrScannerProps) {
       </div>
 
       <div
-        className={`flex items-center gap-3 rounded-2xl border p-4 transition-all duration-200 ${
+        className={`flex items-center justify-between rounded-2xl border p-4 transition-all duration-200 ${
           status === 'success'
             ? 'border-[#d6f94a] bg-[#d6f94a]/20 text-[#17211b]'
             : status === 'error'
               ? 'border-[#ff765f] bg-[#ff765f]/15 text-[#c34837]'
               : status === 'queued'
                 ? 'border-[#17211b] bg-[#17211b] text-white'
-                : 'border-[#dce1d5] bg-[#fffef9] text-[#17211b]'
+                : status === 'syncing'
+                  ? 'border-amber-300 bg-amber-50 text-amber-900'
+                  : 'border-[#dce1d5] bg-[#fffef9] text-[#17211b]'
         }`}
       >
-        {status === 'success' && (
-          <CheckCircle2 className="h-5 w-5 shrink-0 text-[#17211b]" />
-        )}
-        {status === 'error' && (
-          <XCircle className="h-5 w-5 shrink-0 text-[#c34837]" />
-        )}
-        {status === 'queued' && (
-          <WifiOff className="h-5 w-5 shrink-0 text-[#d6f94a]" />
-        )}
-        {status === 'idle' && (
-          <Camera className="h-5 w-5 shrink-0 text-[#6d766d]" />
-        )}
+        <div className="flex items-center gap-3">
+          {status === 'success' && (
+            <CheckCircle2 className="h-5 w-5 shrink-0 text-[#17211b]" />
+          )}
+          {status === 'error' && (
+            <XCircle className="h-5 w-5 shrink-0 text-[#c34837]" />
+          )}
+          {status === 'queued' && (
+            <WifiOff className="h-5 w-5 shrink-0 text-[#d6f94a]" />
+          )}
+          {(status === 'idle' || status === 'syncing') && (
+            <Camera className="h-5 w-5 shrink-0 text-[#6d766d]" />
+          )}
 
-        <p className="text-xs font-bold tracking-tight">{result}</p>
+          <p className="text-xs font-bold tracking-tight">{result}</p>
+        </div>
+
+        {status === 'error' && (
+          <button
+            type="button"
+            onClick={() => void triggerSync()}
+            disabled={isSyncing}
+            className="flex items-center gap-1.5 rounded-full bg-[#17211b] px-3 py-1 text-[11px] font-bold text-white transition hover:bg-[#25332b] disabled:opacity-50"
+          >
+            <RefreshCw
+              className={`h-3 w-3 ${isSyncing ? 'animate-spin' : ''}`}
+            />
+            <span>Retry Sync</span>
+          </button>
+        )}
       </div>
     </div>
   );

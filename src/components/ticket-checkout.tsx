@@ -146,7 +146,7 @@ export function TicketCheckout({ eventId, tiers = [] }: TicketCheckoutProps) {
           : guestData?.phone?.trim() || undefined,
         gender: isAuthenticated ? user?.gender || undefined : guestData?.gender,
       };
-
+      
       if (total === 0) {
         await api(`/events/${eventId}/reserve`, {
           method: 'POST',
