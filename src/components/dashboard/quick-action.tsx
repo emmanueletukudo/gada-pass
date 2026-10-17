@@ -30,15 +30,17 @@ export const QuickActions: FC<QucikActionsProps> = ({ role }) => {
                   ? '/dashboard/organizer/events/create'
                   : action === 'Browse events'
                     ? '/events'
-                    : action === 'Log in'
-                      ? '/auth/login'
+                    : action === 'Update profile'
+                      ? '/dashboard/attendee/settings'
                       : '#'
             }
             key={action}
             className="flex w-full items-center justify-between rounded-xl border border-[#dce1d5] px-4 py-4 text-left text-sm font-bold transition hover:border-[#17211b]"
           >
             <span>{action}</span>
-            <span className="text-lg flex flex-row"><ArrowRight/></span>
+            <span className="text-lg flex flex-row">
+              <ArrowRight />
+            </span>
           </Link>
         ))}
       </div>
