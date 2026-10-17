@@ -18,13 +18,47 @@ export type User = {
 
 type SideBarProps = {
   user: User | null;
+  isLoading?: boolean;
 };
 
-export default function SideBar({ user }: SideBarProps) {
+export default function SideBar({ user, isLoading = false }: SideBarProps) {
   const pathname = usePathname();
-  const rawRole = user?.role?.toLowerCase() || 'attendee';
 
+  // ── SKELETON LOADER STATE ────────────────────────────────────────────────
+  if (isLoading || !user) {
+    return (
+      <aside className="fixed bottom-0 left-0 top-0 hidden w-64 flex-col justify-between border-r border-[#dce1d5] bg-[#fffef9] p-6 lg:flex animate-pulse">
+        <div className="space-y-8">
+          <Logo />
+          <div className="space-y-4">
+            <div className="h-3 w-28 rounded bg-[#dce1d5]/60" />
 
+            <div className="space-y-2">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div
+                  key={i}
+                  className="flex h-12 w-full items-center gap-3 rounded-xl bg-[#dce1d5]/40 px-4"
+                >
+                  <div className="h-5 w-5 rounded-md bg-[#dce1d5]/70" />
+                  <div className="h-3 w-28 rounded bg-[#dce1d5]/70" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="border-t border-[#dce1d5] pt-4 space-y-4">
+          <div className="px-4 space-y-2">
+            <div className="h-4 w-32 rounded bg-[#dce1d5]/70" />
+            <div className="h-3 w-40 rounded bg-[#dce1d5]/50" />
+          </div>
+
+          <div className="h-12 w-full rounded-xl border border-[#dce1d5] bg-[#dce1d5]/30" />
+        </div>
+      </aside>
+    );
+  }
+
+  const rawRole = user.role.toLowerCase();
   const currentRoleSegment = rawRole === 'gate_agent' ? 'agent' : rawRole;
   const basePath = `/dashboard/${currentRoleSegment}`;
   const navItems =
@@ -70,10 +104,10 @@ export default function SideBar({ user }: SideBarProps) {
       <div className="border-t border-[#dce1d5] pt-4">
         <div className="mb-4 px-4">
           <p className="truncate text-sm font-bold text-[#17211b]">
-            {user?.hostName || 'User Account'}
+            {user.hostName || 'User Account'}
           </p>
           <p className="truncate text-xs font-medium text-[#6d766d]">
-            {user?.email || ''}
+            {user.email || ''}
           </p>
         </div>
 

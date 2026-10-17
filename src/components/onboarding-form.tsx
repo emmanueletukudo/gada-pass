@@ -28,7 +28,6 @@ export default function OnboardingForm() {
   const router = useRouter();
   const { data: session, status, update } = useSession();
   const [step, setStep] = useState<number>(1);
-  
 
   const {
     register: field,
@@ -105,8 +104,8 @@ export default function OnboardingForm() {
       );
 
       if (response?.accessToken) {
-          toast.success('Onboarding completed successfully!');
-          
+        toast.success('Onboarding completed successfully!');
+
         await update({
           ...session,
           user: {
@@ -117,7 +116,6 @@ export default function OnboardingForm() {
           },
         });
 
-      
         const dashboardPath =
           response.user.role === 'ORGANIZER'
             ? '/dashboard/organizer'
@@ -137,8 +135,38 @@ export default function OnboardingForm() {
 
   if (status === 'loading') {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#fffef9]">
-        <Loader2 className="h-8 w-8 animate-spin text-[#17211b]" />
+      <div className="space-y-8 animate-pulse">
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="h-3 w-16 bg-gray-200 rounded" />
+          </div>
+
+          <div className="space-y-2">
+            <div className="h-3 w-24 bg-gray-200 rounded" />
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="h-12 bg-gray-200 rounded-xl" />
+              <div className="h-12 bg-gray-200 rounded-xl" />
+            </div>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1">
+              <div className="h-3 w-20 bg-gray-200 rounded" />
+              <div className="h-12 bg-gray-200 rounded-2xl" />
+            </div>
+            <div className="space-y-1">
+              <div className="h-3 w-20 bg-gray-200 rounded" />
+              <div className="h-12 bg-gray-200 rounded-2xl" />
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <div className="h-3 w-28 bg-gray-200 rounded" />
+            <div className="h-12 bg-gray-200 rounded-2xl" />
+          </div>
+
+          <div className="h-12 w-full bg-gray-200 rounded-full" />
+        </div>
       </div>
     );
   }
