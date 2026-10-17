@@ -5,7 +5,15 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { X, Plus, Minus, TicketPlus } from 'lucide-react';
+import {
+  X,
+  Plus,
+  Minus,
+  TicketPlus,
+  Loader2,
+  Zap,
+  Calendar,
+} from 'lucide-react';
 import { api } from '@/lib/api';
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
 import { GadaInput } from './common/gada-inputs';
@@ -30,6 +38,9 @@ export type Tier = {
   currency: string;
   quantity: number;
   soldCount: number;
+  isMultiDay?: boolean;
+  maxScansPerDay?: number;
+  validDate?: string;
 };
 
 interface TicketCheckoutProps {
@@ -81,7 +92,6 @@ export function TicketCheckout({ eventId, tiers = [] }: TicketCheckoutProps) {
 
   const currencySymbol =
     tiers[0]?.currency === 'NGN' ? '₦' : tiers[0]?.currency || '₦';
-  const currencyCode = tiers[0]?.currency || 'NGN';
 
   const platformFee = subtotal > 0 ? subtotal * 0.05 + 100 : 0;
   const total = subtotal + platformFee;
@@ -105,10 +115,9 @@ export function TicketCheckout({ eventId, tiers = [] }: TicketCheckoutProps) {
 
   const selectedGender = watch('gender');
 
-  const processCheckout = async (guestData?: GuestCheckoutFormData) => {    
+  const processCheckout = async (guestData?: GuestCheckoutFormData) => {
     if (isProcessing || activeSelections.length === 0) return;
-
-    const email = user?.email || guestData?.email;
+    const email = (isAuthenticated ? user?.email : guestData?.email)?.trim();
 
     if (!email) {
       toast.error('Please enter a valid email address.');
@@ -118,17 +127,24 @@ export function TicketCheckout({ eventId, tiers = [] }: TicketCheckoutProps) {
     setIsProcessing(true);
 
     try {
+      const authenticatedFullName =
+        user?.name ||
+        [user?.firstName, user?.lastName].filter(Boolean).join(' ').trim() ||
+        user?.hostName;
+
       const payload = {
         items: activeSelections.map((item) => ({
           tierId: item.tier.id,
           quantity: item.quantity,
         })),
         email,
-        fullName: isAuthenticated ? undefined : guestData?.fullName?.trim(),
+        fullName: isAuthenticated
+          ? authenticatedFullName
+          : guestData?.fullName?.trim(),
         phone: isAuthenticated
-          ? undefined
+          ? user?.phone
           : guestData?.phone?.trim() || undefined,
-        gender: isAuthenticated ? undefined : guestData?.gender,
+        gender: isAuthenticated ? user?.gender || undefined : guestData?.gender,
       };
 
       if (total === 0) {
@@ -137,14 +153,19 @@ export function TicketCheckout({ eventId, tiers = [] }: TicketCheckoutProps) {
           body: JSON.stringify(payload),
         });
 
+
         toast.success('Tickets reserved successfully! Check your email.');
         setIsDrawerOpen(false);
 
         if (isAuthenticated) {
-          router.push('/dashboard/attendee');
+          router.push('/dashboad/attendee/tickets');
         } else {
           reset();
           setQuantities({});
+          
+          setTimeout(() => {
+            window.location.reload();
+          }, 1500);
         }
         return;
       }
@@ -159,7 +180,11 @@ export function TicketCheckout({ eventId, tiers = [] }: TicketCheckoutProps) {
         body: JSON.stringify(payload),
       });
 
-      window.location.href = initialized.authorization_url as string;
+      if (initialized?.authorization_url) {
+        window.location.href = initialized.authorization_url;
+      } else {
+        throw new Error('Failed to obtain payment authorization URL');
+      }
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : 'Checkout unavailable',
@@ -192,26 +217,58 @@ export function TicketCheckout({ eventId, tiers = [] }: TicketCheckoutProps) {
           return (
             <div
               key={tier.id}
-              className="flex flex-col justify-between gap-4 rounded-3xl border border-[#e6e8e3] bg-[#ffffff] p-5 shadow-sm transition-all sm:flex-row sm:items-center"
+              className={`flex flex-col justify-between gap-4 rounded-3xl border p-5 shadow-sm transition-all sm:flex-row sm:items-center ${
+                tier.isMultiDay
+                  ? 'border-[#ff5500]/40 bg-[#fffef9]'
+                  : 'border-[#e6e8e3] bg-[#ffffff]'
+              }`}
             >
               <div className="flex items-center gap-3.5">
                 <div
-                  className={`grid h-14 w-14 shrink-0 place-items-center rounded-2xl ${tier.name.toLocaleLowerCase().includes('vip') ? 'bg-[#ff765f]' : 'bg-[#8aa520]'}  text-white shadow-md`}
+                  className={`grid h-14 w-14 shrink-0 place-items-center rounded-2xl ${
+                    tier.name.toLocaleLowerCase().includes('vip')
+                      ? 'bg-[#ff765f]'
+                      : 'bg-[#8aa520]'
+                  } text-white shadow-md`}
                 >
                   <TicketPlus className="h-6 w-6" />
                 </div>
 
-                <div className="space-y-0.5">
-                  <h3 className="text-xl font-bold tracking-tight text-[#1c1926]">
-                    {tier.name}
-                  </h3>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-xl font-bold tracking-tight text-[#1c1926]">
+                      {tier.name}
+                    </h3>
+                    {tier.isMultiDay && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-[#17211b] px-2.5 py-0.5 text-[10px] font-black text-white">
+                        <Zap className="h-3 w-3 text-[#d6f94a]" /> MULTI-DAY
+                        PASS
+                      </span>
+                    )}
+                    {tier.validDate && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-[#d6f94a]/30 px-2.5 py-0.5 text-[10px] font-bold text-[#17211b]">
+                        <Calendar className="h-3 w-3" />{' '}
+                        {new Date(tier.validDate).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                      </span>
+                    )}
+                  </div>
+
                   <p className="text-xs text-[#73727a]">
                     {tier.description ||
                       `Standard ${tier.name} access to the event.`}
                   </p>
-                  <span className="inline-block rounded-full bg-[#f2f4f0] px-3 py-0.5 text-[11px] font-medium text-[#5c5b63]">
-                    {isSoldOut ? 'Sold Out' : `${available} remaining`}
-                  </span>
+
+                  <div className="flex items-center gap-3 text-[11px] font-medium text-[#5c5b63]">
+                    <span className="rounded-full min-w-[100px] inline-flex bg-[#f2f4f0] px-3 py-0.5">
+                      {isSoldOut ? 'Sold Out' : `${available} remaining`}
+                    </span>
+                    {tier.maxScansPerDay && (
+                      <span>Max {tier.maxScansPerDay} scans/day</span>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -246,7 +303,11 @@ export function TicketCheckout({ eventId, tiers = [] }: TicketCheckoutProps) {
                       isProcessing || isSoldOut || currentQty >= available
                     }
                     onClick={() => handleQuantityChange(tier.id, 1, available)}
-                    className={`grid h-8 w-8 place-items-center rounded-full  ${tier.name.toLocaleLowerCase().includes('vip') ? 'bg-[#ff765f] hover:bg-[#d2614d]' : 'bg-[#8aa520] hover:bg-[#687c17]'} text-white shadow-sm transition disabled:opacity-30`}
+                    className={`grid h-8 w-8 place-items-center rounded-full ${
+                      tier.name.toLocaleLowerCase().includes('vip')
+                        ? 'bg-[#ff765f] hover:bg-[#d2614d]'
+                        : 'bg-[#8aa520] hover:bg-[#687c17]'
+                    } text-white shadow-sm transition disabled:opacity-30`}
                   >
                     <Plus className="h-3.5 w-3.5" />
                   </button>
@@ -294,11 +355,13 @@ export function TicketCheckout({ eventId, tiers = [] }: TicketCheckoutProps) {
           onClick={handleCheckoutClick}
           className="w-full rounded-full bg-[#1c1926] py-3.5 text-sm font-bold text-white transition hover:bg-[#2b273b] disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {isProcessing
-            ? 'Processing...'
-            : total === 0
-              ? 'Reserve Tickets'
-              : `Continue to Checkout`}
+          {isProcessing ? (
+            <Loader2 className="h-4 w-4 animate-spin text-[#d6f94a] mx-auto" />
+          ) : total === 0 ? (
+            <span>Reserve Tickets</span>
+          ) : (
+            <span>Continue to Checkout</span>
+          )}
         </button>
       </div>
 
@@ -316,7 +379,7 @@ export function TicketCheckout({ eventId, tiers = [] }: TicketCheckoutProps) {
             }`}
           >
             <div>
-              <div className="flex items-center justify-between  border-[#dce1d5] pb-4">
+              <div className="flex items-center justify-between border-b border-[#dce1d5] pb-4">
                 <div className="flex items-center gap-2">
                   <h2 className="text-xl font-bold text-[#17211b]">
                     Guest Checkout
@@ -439,14 +502,18 @@ export function TicketCheckout({ eventId, tiers = [] }: TicketCheckoutProps) {
               </form>
             </div>
 
-            <div className=" border-[#dce1d5] pt-4 mt-6">
+            <div className="border-t border-[#dce1d5] pt-4 mt-6">
               <button
                 type="submit"
                 form="guest-checkout-form"
                 disabled={isProcessing}
                 className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#17211b] py-3.5 text-sm font-bold text-white transition hover:bg-[#25332b] disabled:opacity-50"
               >
-                <span>{isProcessing ? 'Processing...' : 'Pay Now'}</span>
+                {isProcessing ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-[#d6f94a]" />
+                ) : (
+                  <span>Pay Now</span>
+                )}
               </button>
             </div>
           </div>

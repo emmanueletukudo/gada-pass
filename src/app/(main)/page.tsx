@@ -3,16 +3,11 @@
 import { useMemo } from 'react';
 import Link from 'next/link';
 import { Carousel } from '@/components/carousel';
-import { Apple, ArrowRight, ArrowUpRight, Smartphone } from 'lucide-react';
-import { Logo } from '@/components/logo';
+import { ArrowRight } from 'lucide-react';
 import { EventCategories } from '@/components/events/event-categories';
 import { EventList } from '@/components/events/event-list';
 import { useEvents } from '@/lib/hooks/useEvents';
-import { motion } from 'framer-motion';
-import Image from 'next/image';
 import { MobileAppSection } from '@/components/app-section';
-import AppFooter from '@/components/app-footer';
-import { AppHeader } from '@/components/app-header';
 
 export default function Home() {
   const { events, category, loading, error, setCategory } = useEvents();

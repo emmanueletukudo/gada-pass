@@ -2,10 +2,9 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { TicketCheckout } from '@/components/ticket-checkout';
 import { api, eventCover, mediaUrl, type ApiEvent } from '@/lib/api';
-import { Logo } from '@/components/logo';
-import {  ArrowUpRight, Building2 } from 'lucide-react';
+import { ArrowUpRight, Building2 } from 'lucide-react';
+import { TicketCheckout } from '@/components/ticket-checkout';
 
 export default function EventPage({
   params,
@@ -56,7 +55,6 @@ export default function EventPage({
     return (
       <div className="min-h-screen">
         <header className="mx-auto flex max-w-7xl items-center justify-between px-5 py-6 md:px-10">
-          <Logo />
           <div className="h-6 w-24 animate-pulse rounded-full bg-gray-200" />
         </header>
 
