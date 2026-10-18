@@ -3,7 +3,7 @@
 import { use } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, Users, Settings, ArrowLeft, Weight, CalendarDays } from 'lucide-react';
+import { LayoutDashboard, Users, Settings, ArrowLeft, Weight, CalendarDays, Code, CodeXml } from 'lucide-react';
 
 interface EventLayoutProps {
   children: React.ReactNode;
@@ -34,6 +34,12 @@ export default function EventWorkspaceLayout({
       label: 'Update Event',
       href: `/dashboard/organizer/events/${eventId}/edit`,
       icon: CalendarDays,
+      exact: false,
+    },
+    {
+      label: 'Embed',
+      href: `/dashboard/organizer/events/${eventId}/embed`,
+      icon: CodeXml,
       exact: false,
     },
   ];

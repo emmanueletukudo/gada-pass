@@ -113,7 +113,6 @@ export default function OrganizerTicketsAccessPage({
 
   return (
     <div className="space-y-8 mt-10 pb-16">
-      {/* Top Metric Cards Row */}
       <div className="grid gap-4 md:grid-cols-4">
         <MetricCard
           accent="#ff765f"
@@ -137,10 +136,7 @@ export default function OrganizerTicketsAccessPage({
           title="Ticket Varieties"
         />
       </div>
-
-      {/* Visualizations Section: Daily Foot Traffic & Hourly Velocity */}
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Daily Foot Traffic Chart */}
         <div className="rounded-2xl border border-[#dce1d5] bg-[#fffef9] p-6 shadow-sm">
           <div className="mb-6 flex items-center justify-between">
             <div>
@@ -208,8 +204,6 @@ export default function OrganizerTicketsAccessPage({
             )}
           </div>
         </div>
-
-        {/* Hourly Check-In Velocity Chart */}
         <div className="rounded-2xl border border-[#dce1d5] bg-[#fffef9] p-6 shadow-sm">
           <div className="mb-6 flex items-center justify-between">
             <div>
