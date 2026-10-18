@@ -24,7 +24,6 @@ type SideBarProps = {
 export default function SideBar({ user, isLoading = false }: SideBarProps) {
   const pathname = usePathname();
 
-  // ── SKELETON LOADER STATE ────────────────────────────────────────────────
   if (isLoading || !user) {
     return (
       <aside className="fixed bottom-0 left-0 top-0 hidden w-64 flex-col justify-between border-r border-[#dce1d5] bg-[#fffef9] p-6 lg:flex animate-pulse">

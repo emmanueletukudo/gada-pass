@@ -540,11 +540,8 @@ export default function AgentScannerPage() {
         </div>
       </div>
 
-      {/* SCANNER & CONTROLS SECTION */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        {/* CAMERA SCANNER COLUMN */}
         <div className="rounded-3xl border border-[#dce1d5] bg-[#fffef9] p-4 sm:p-6 shadow-sm space-y-4">
-          {/* CONDITIONAL RENDER: IN/OUT Toggle renders ONLY for Multi-Day Events */}
           {isMultiDayEvent && (
             <div className="grid grid-cols-2 gap-2 rounded-2xl bg-[#f7f7f2] p-1.5 border border-[#dce1d5] shadow-inner mb-2">
               <button
@@ -556,7 +553,6 @@ export default function AgentScannerPage() {
                     : 'text-[#6d766d] hover:text-[#17211b]'
                 }`}
               >
-                <LogIn className="h-3.5 w-3.5" />
                 <span>ENTRY MODE (IN)</span>
               </button>
 
@@ -569,7 +565,6 @@ export default function AgentScannerPage() {
                     : 'text-[#6d766d] hover:text-[#17211b]'
                 }`}
               >
-                <LogOut className="h-3.5 w-3.5" />
                 <span>RE-ENTRY EXIT (OUT)</span>
               </button>
             </div>
@@ -645,8 +640,7 @@ export default function AgentScannerPage() {
             </div>
           )}
         </div>
-
-        {/* MANUAL LOOKUP & RESULTS COLUMN */}
+        
         <div className="flex flex-col justify-between rounded-3xl border border-[#dce1d5] bg-[#fffef9] p-4 sm:p-6 shadow-sm">
           <div className="space-y-6">
             <div>
