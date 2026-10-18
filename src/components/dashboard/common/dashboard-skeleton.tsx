@@ -37,10 +37,8 @@ export function DashboardSkeleton() {
         </div>
       </aside>
 
-      {/* Main Dashboard Content Area Skeleton */}
       <main className="w-full lg:pl-64">
         <div className="w-full space-y-6 p-4 sm:p-6 md:p-8 animate-pulse">
-          {/* Header Banner */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-3xl border border-[#dce1d5] bg-[#fffef9] p-6">
             <div className="space-y-2">
               <div className="h-3 w-28 rounded-full bg-[#e8ede0]" />
@@ -49,8 +47,6 @@ export function DashboardSkeleton() {
             </div>
             <div className="h-10 w-36 rounded-full bg-[#e8ede0]" />
           </div>
-
-          {/* Metric Cards */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             {[1, 2, 3].map((idx) => (
               <div

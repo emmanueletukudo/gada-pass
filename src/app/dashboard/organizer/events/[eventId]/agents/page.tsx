@@ -18,7 +18,6 @@ export default function EventAgentsPage({ params }: PageProps) {
   const [invitations, setInvitations] = useState<AgentInvitation[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  // Separate loading states for revoking active agents vs canceling invites
   const [revokingAgentId, setRevokingAgentId] = useState<string | null>(null);
   const [revokingInviteId, setRevokingInviteId] = useState<string | null>(null);
 
@@ -67,11 +66,10 @@ export default function EventAgentsPage({ params }: PageProps) {
     }
   };
 
-  // Revoke an active assigned agent's access
+
   const handleRevokeAssignedAgent = async (agentId: string) => {
     try {
       setRevokingAgentId(agentId);
-      // Adjust endpoint if your backend route differs (e.g. PATCH or DELETE on event agents)
       await api(`/agents/events/${eventId}/agents/${agentId}`, {
         method: 'DELETE',
       });

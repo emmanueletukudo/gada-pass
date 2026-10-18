@@ -175,7 +175,6 @@ export function Step3Tickets({ form }: Step3Props) {
                 />
               </div>
 
-              {/* Advanced Trade Fair / Multi-Day Controls */}
               <div className="mt-2 flex flex-col gap-4 rounded-xl border border-dashed border-[#dce1d5] bg-[#f7f7f2] p-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-2">
                   <input

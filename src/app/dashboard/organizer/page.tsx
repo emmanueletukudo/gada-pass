@@ -188,7 +188,6 @@ export default function OrganizerDashboardPage() {
         <QuickActions role="ORGANIZER" />
       </div>
 
-      {/* Recent Events List */}
       <div className="rounded-3xl border border-[#dce1d5] bg-[#fffef9] p-6 shadow-sm space-y-4">
         <div className="flex items-center justify-between border-b border-[#dce1d5] pb-4">
           <div>

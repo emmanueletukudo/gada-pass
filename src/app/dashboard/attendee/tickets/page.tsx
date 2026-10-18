@@ -128,7 +128,6 @@ export default function AttendeeTicketsPage() {
 
   return (
     <div className="space-y-8 max-w-5xl mx-auto py-10 px-4">
-      {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h2 className="text-xl font-bold tracking-tight text-[#17211b]">
@@ -139,8 +138,6 @@ export default function AttendeeTicketsPage() {
             codes.
           </p>
         </div>
-
-        {/* Tab Selector */}
         <div className="flex rounded-full bg-[#f0f3eb] p-1 border border-[#dce1d5]">
           <button
             onClick={() => setActiveTab('upcoming')}

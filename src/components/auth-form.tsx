@@ -99,7 +99,6 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
     }
   }, [firstNameValue, setValue, watch]);
 
-  // Handle standard authenticated users who don't need OAuth onboarding here
   useEffect(() => {
     if (status === 'authenticated' && session?.user) {
       if (!session.user.isNewUser && session.user.hostName) {

@@ -7,7 +7,7 @@ import { useState, useEffect } from 'react';
 import { GadaInput } from '@/components/common/gada-inputs';
 import { PaymentSettingsStep } from '@/components/dashboard/events/payment';
 import { SettingsSkeleton } from '@/components/dashboard/common/settings-skeleton';
-import { OrganizationLogoSettings } from '@/components/common/OrganizationLogoSettings';
+import { OrganizationLogoSettings } from '@/components/common/organization-logo-settings';
 
 interface SettingsFormValues {
   hostName: string;
@@ -25,6 +25,7 @@ interface SettlementAccountValues {
 export default function OrganizerSettingsPage() {
   const { user, isLoading: isUserLoading } = useCurrentUser();
   const [isSaving, setIsSaving] = useState(false);
+  const [currentLogoUrl, setCurrentLogoUrl] = useState<string>("")
 
   const {
     register: field,
@@ -55,6 +56,8 @@ export default function OrganizerSettingsPage() {
         payoutAccount: '',
         supportEmail: user.email || '',
       });
+
+      setCurrentLogoUrl(user.logoUrl as string);
     }
   }, [user, resetProfileForm]);
 
@@ -83,7 +86,7 @@ export default function OrganizerSettingsPage() {
             onSubmit={handleSubmit(onSettingsSubmit)}
             className="space-y-6 rounded-2xl mt-5 border border-[#dce1d5] bg-[#fffef9] p-6 shadow-sm"
           >
-            <OrganizationLogoSettings />
+            <OrganizationLogoSettings currentLogoUrl={currentLogoUrl} />
             <div className="space-y-4">
               <GadaInput
                 register={field}

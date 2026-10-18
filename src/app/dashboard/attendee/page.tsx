@@ -62,14 +62,12 @@ export default function AttendeeDashboardPage() {
       .finally(() => setIsLoading(false));
   }, []);
 
-  // Compute metrics from real ticket data
   const metrics = useMemo(() => {
     const activeTickets = tickets.filter(
       (t) => t.status !== 'USED' && t.status !== 'CANCELLED',
     );
     const usedTickets = tickets.filter((t) => t.status === 'USED');
 
-    // Find the next upcoming event based on event startDate or active ticket list
     const sortedUpcoming = [...activeTickets].sort((a, b) => {
       const dateA = a.event?.startDate
         ? new Date(a.event.startDate).getTime()
@@ -90,7 +88,6 @@ export default function AttendeeDashboardPage() {
     };
   }, [tickets]);
 
-  // Transform ticket creation dates into monthly activity trend points for EventGraph
   const chartData = useMemo(() => {
     const months = [
       'Jan',

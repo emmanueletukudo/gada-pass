@@ -21,7 +21,6 @@ export function OrganizationLogoSettings({
   );
   const [isUploading, setIsUploading] = useState(false);
 
-  // Sync preview when currentLogoUrl updates from props (e.g. async fetch from parent)
   useEffect(() => {
     setPreviewUrl(currentLogoUrl ? mediaUrl(currentLogoUrl) : null);
   }, [currentLogoUrl]);

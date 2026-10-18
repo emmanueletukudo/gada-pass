@@ -267,9 +267,7 @@ export default function OrganizerTicketsAccessPage({
         </div>
       </div>
 
-      {/* Tier Performance & Gate Operator Activity */}
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Tier Breakdown Table */}
         <div className="lg:col-span-2 rounded-2xl border border-[#dce1d5] bg-[#fffef9] p-6 shadow-sm">
           <h3 className="text-base font-bold text-[#17211b] mb-4">
             Ticket Tier Performance
@@ -319,7 +317,6 @@ export default function OrganizerTicketsAccessPage({
           </div>
         </div>
 
-        {/* Gate Agent Performance */}
         <div className="rounded-2xl border border-[#dce1d5] bg-[#fffef9] p-6 shadow-sm">
           <h3 className="text-base font-bold text-[#17211b] mb-4">
             Terminal Throughput
@@ -353,7 +350,6 @@ export default function OrganizerTicketsAccessPage({
         </div>
       </div>
 
-      {/* Action Cards Row */}
       <div className="grid gap-6 md:grid-cols-2">
         <div className="rounded-2xl border border-[#dce1d5] bg-[#fffef9] p-6 space-y-4 shadow-sm">
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#ff765f]/10 text-[#ff765f]">

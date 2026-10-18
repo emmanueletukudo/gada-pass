@@ -222,7 +222,6 @@ export default function AgentScannerPage() {
     }
   }, [selectedEventId]);
 
-  // Auto-fetch checked-in guests & silently cache manifest when selectedEventId changes
   useEffect(() => {
     if (selectedEventId) {
       setLastManualResult(null);
@@ -230,8 +229,7 @@ export default function AgentScannerPage() {
       void cacheManifestForEvent(selectedEventId, false);
     }
   }, [selectedEventId, fetchCheckedInGuests, cacheManifestForEvent]);
-
-  // Network listener: auto-sync outbox and auto-cache manifest on reconnect
+  
   useEffect(() => {
     const handleOnline = async () => {
       toast.success(
@@ -399,7 +397,6 @@ export default function AgentScannerPage() {
 
   return (
     <div className="space-y-4 sm:space-y-6 mt-4 sm:mt-8 px-3 sm:px-0">
-      {/* EVENT CONTEXT HEADER */}
       <div className="flex flex-col gap-4 rounded-3xl border border-[#dce1d5] bg-[#fffef9] p-5 sm:p-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="space-y-1">
@@ -485,7 +482,6 @@ export default function AgentScannerPage() {
         </div>
       )}
 
-      {/* METRICS ROW */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         <div className="rounded-2xl border border-[#dce1d5] bg-[#fffef9] p-4 sm:p-5 shadow-sm">
           <div className="flex items-center justify-between text-[#6d766d]">
@@ -640,7 +636,7 @@ export default function AgentScannerPage() {
             </div>
           )}
         </div>
-        
+
         <div className="flex flex-col justify-between rounded-3xl border border-[#dce1d5] bg-[#fffef9] p-4 sm:p-6 shadow-sm">
           <div className="space-y-6">
             <div>
