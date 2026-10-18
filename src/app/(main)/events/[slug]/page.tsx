@@ -54,13 +54,13 @@ export default function EventPage({
   if (!event)
     return (
       <div className="min-h-screen">
-        <header className="mx-auto flex max-w-7xl items-center justify-between px-5 py-6 md:px-10">
+        <header className="mx-auto flex max-w-7xl items-center justify-between px-4 py-6 sm:px-6 md:px-10">
           <div className="h-6 w-24 animate-pulse rounded-full bg-gray-200" />
         </header>
 
-        <main className="mx-auto max-w-7xl px-5 pb-20 md:px-10">
-          <section className="grid overflow-hidden rounded-4xl bg-gray-200 md:grid-cols-[1.1fr_0.9fr] animate-pulse">
-            <div className="flex min-h-107.5 flex-col justify-between p-8 md:p-14">
+        <main className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 md:px-10">
+          <section className="grid overflow-hidden rounded-3xl bg-gray-200 md:grid-cols-[1.1fr_0.9fr] animate-pulse">
+            <div className="flex min-h-[350px] flex-col justify-between p-6 sm:p-10 md:p-14">
               <div className="h-6 w-28 rounded-full bg-gray-300" />
               <div className="mt-8 space-y-4">
                 <div className="h-4 w-36 rounded bg-gray-300" />
@@ -69,10 +69,10 @@ export default function EventPage({
                 <div className="h-10 w-32 rounded-full bg-gray-300" />
               </div>
             </div>
-            <div className="min-h-75 bg-gray-300" />
+            <div className="min-h-[250px] bg-gray-300" />
           </section>
 
-          <div className="mt-10 grid gap-12 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="mt-10 grid gap-10 lg:grid-cols-[1.2fr_0.8fr]">
             <div className="space-y-6">
               <div className="flex gap-6 border-b border-gray-200 pb-4">
                 <div className="h-6 w-16 animate-pulse rounded bg-gray-200" />
@@ -98,7 +98,6 @@ export default function EventPage({
     .map((image) => mediaUrl(image))
     .filter((image) => image && image !== cover);
 
-
   const hostName = event.organizer?.hostName || 'Event Host';
   const hostInitials = hostName
     .split(' ')
@@ -109,24 +108,25 @@ export default function EventPage({
 
   return (
     <div className="min-h-screen">
-      <main className="mx-auto max-w-7xl px-5 pb-20 md:px-10">
-        <section className="grid overflow-hidden rounded-4xl bg-[#ff765f] md:grid-cols-[1.1fr_0.9fr]">
-          <div className="flex min-h-107.5 flex-col justify-between p-8 md:p-14">
+      <main className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 md:px-10">
+        {/* Responsive Hero Section */}
+        <section className="grid overflow-hidden rounded-3xl sm:rounded-4xl bg-[#ff765f] md:grid-cols-[1.1fr_0.9fr]">
+          <div className="flex flex-col justify-between p-6 sm:p-10 md:p-14">
             <span className="w-fit rounded-full bg-[#fffef9] px-3 py-1 text-xs font-bold">
               {event.category.name}
             </span>
-            <div>
-              <p className="mb-4 text-xs font-bold uppercase tracking-[0.2em]">
+            <div className="mt-6 md:mt-0">
+              <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em]">
                 {new Date(event.startsAt).toLocaleString('en-NG', {
                   dateStyle: 'full',
                   timeStyle: 'short',
                 })}
               </p>
-              <h1 className="display text-6xl font-bold leading-[0.85] tracking-[-0.08em] md:text-8xl">
+              <h1 className="text-4xl sm:text-6xl md:text-8xl font-bold leading-[0.9] tracking-[-0.06em] break-words">
                 {event.name}
                 <span className="text-[#d6f94a]">.</span>
               </h1>
-              <p className="mt-6 max-w-xl text-sm font-semibold">
+              <p className="mt-4 sm:mt-6 max-w-xl text-xs sm:text-sm font-semibold leading-relaxed">
                 {event.description}
               </p>
               <button
@@ -137,14 +137,14 @@ export default function EventPage({
                     .getElementById('tickets')
                     ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }}
-                className="mt-8 rounded-full bg-[#17211b] px-6 py-3 text-sm font-bold text-white"
+                className="mt-6 sm:mt-8 rounded-full bg-[#17211b] px-6 py-3 text-xs sm:text-sm font-bold text-white transition hover:bg-[#25332b]"
               >
                 Get tickets
               </button>
             </div>
           </div>
           <div
-            className="relative flex min-h-75 flex-col justify-end overflow-hidden bg-[#d6f94a] p-8 md:p-14"
+            className="relative flex min-h-[250px] sm:min-h-[350px] md:min-h-full flex-col justify-end overflow-hidden bg-[#d6f94a] p-6 sm:p-10 md:p-14"
             style={
               cover
                 ? {
@@ -158,18 +158,20 @@ export default function EventPage({
           />
         </section>
 
-        <div className="mt-10 grid gap-12 lg:grid-cols-[1.2fr_0.8fr]">
+        {/* Content Layout Grid */}
+        <div className="mt-10 grid gap-10 lg:grid-cols-[1.2fr_0.8fr]">
           <div>
+            {/* Tabs */}
             <div className="flex gap-6 overflow-x-auto border-b border-[#dce1d5] pb-4 text-sm font-bold">
               {(['About', 'Venue'] as const).map((tab) => (
                 <button
                   key={tab}
                   type="button"
                   onClick={() => setActiveTab(tab)}
-                  className={`whitespace-nowrap pb-4 ${
+                  className={`whitespace-nowrap pb-4 transition-colors ${
                     activeTab === tab
-                      ? 'border-b-2 border-[#ff765f]'
-                      : 'text-[#6d766d]'
+                      ? 'border-b-2 border-[#ff765f] text-[#17211b]'
+                      : 'text-[#6d766d] hover:text-[#17211b]'
                   }`}
                 >
                   {tab}
@@ -177,36 +179,40 @@ export default function EventPage({
               ))}
             </div>
 
+            {/* About Tab Content */}
             {activeTab === 'About' && (
               <div>
                 <div className="mt-8 flex items-center gap-4 p-2">
-                  <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#ff765f] bg-[#17211b] text-white">
+                  <div className="relative flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#ff765f] bg-[#17211b] text-white">
                     {event.organizer?.logoUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={mediaUrl(event.organizer.logoUrl)}
                         alt={hostName}
                         className="h-full w-full object-cover"
                       />
                     ) : (
-                      <span className="text-base font-bold">
-                        {hostInitials || <Building2 className="h-6 w-6" />}
+                      <span className="text-sm sm:text-base font-bold">
+                        {hostInitials || (
+                          <Building2 className="h-5 w-5 sm:h-6 sm:w-6" />
+                        )}
                       </span>
                     )}
                   </div>
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-[0.15em] text-[#6d766d]">
+                    <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.15em] text-[#6d766d]">
                       Hosted by
                     </p>
-                    <h3 className="text-lg font-bold text-[#17211b]">
+                    <h3 className="text-base sm:text-lg font-bold text-[#17211b]">
                       {hostName}
                     </h3>
                   </div>
                 </div>
 
-                <h2 className="display mt-10 text-3xl font-bold tracking-[-0.06em]">
+                <h2 className="mt-8 sm:mt-10 text-2xl sm:text-3xl font-bold tracking-[-0.04em]">
                   About the event
                 </h2>
-                <p className="mt-5 max-w-xl leading-7 text-[#6d766d]">
+                <p className="mt-4 sm:mt-5 max-w-xl text-xs sm:text-sm leading-6 sm:leading-7 text-[#6d766d]">
                   {event.description}
                 </p>
 
@@ -218,18 +224,18 @@ export default function EventPage({
                         key={src}
                         src={src}
                         alt=""
-                        className="h-32 w-full rounded-xl object-cover"
+                        className="h-28 sm:h-32 w-full rounded-xl object-cover"
                       />
                     ))}
                   </div>
                 )}
 
-                <div className="mt-8 grid gap-3 sm:grid-cols-3">
-                  <div className="rounded-xl border border-[#dce1d5] p-4">
-                    <p className="text-xs font-bold uppercase tracking-[0.15em] text-[#6d766d]">
+                <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  <div className="rounded-xl border border-[#dce1d5] p-4 bg-white">
+                    <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.15em] text-[#6d766d]">
                       When
                     </p>
-                    <p className="mt-2 text-sm font-bold">
+                    <p className="mt-2 text-xs sm:text-sm font-bold text-[#17211b]">
                       {new Date(event.startsAt).toLocaleDateString('en-NG', {
                         weekday: 'short',
                         day: 'numeric',
@@ -237,19 +243,19 @@ export default function EventPage({
                       })}
                     </p>
                   </div>
-                  <div className="rounded-xl border border-[#dce1d5] p-4">
-                    <p className="text-xs font-bold uppercase tracking-[0.15em] text-[#6d766d]">
+                  <div className="rounded-xl border border-[#dce1d5] p-4 bg-white">
+                    <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.15em] text-[#6d766d]">
                       Where
                     </p>
-                    <p className="mt-2 text-sm font-bold">
+                    <p className="mt-2 text-xs sm:text-sm font-bold text-[#17211b]">
                       {event.city ?? 'Online'}
                     </p>
                   </div>
-                  <div className="rounded-xl border border-[#dce1d5] p-4">
-                    <p className="text-xs font-bold uppercase tracking-[0.15em] text-[#6d766d]">
+                  <div className="rounded-xl border border-[#dce1d5] p-4 bg-white">
+                    <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.15em] text-[#6d766d]">
                       Capacity
                     </p>
-                    <p className="mt-2 text-sm font-bold">
+                    <p className="mt-2 text-xs sm:text-sm font-bold text-[#17211b]">
                       {event.capacity ?? 'Open'}
                     </p>
                   </div>
@@ -257,17 +263,18 @@ export default function EventPage({
               </div>
             )}
 
+            {/* Venue Tab Content */}
             {activeTab === 'Venue' && (
               <div>
-                <h2 className="display mt-10 text-4xl font-bold tracking-[-0.06em]">
+                <h2 className="mt-8 sm:mt-10 text-3xl sm:text-4xl font-bold tracking-[-0.04em]">
                   Find your way there.
                 </h2>
-                <div className="grain mt-8 grid min-h-64 place-items-center rounded-2xl bg-[#7ca9ff] p-6 text-center">
+                <div className="mt-8 grid min-h-[220px] sm:min-h-64 place-items-center rounded-2xl bg-[#7ca9ff] p-6 text-center">
                   <div>
-                    <p className="display mt-3 text-2xl font-bold">
+                    <p className="mt-3 text-xl sm:text-2xl font-bold text-[#17211b]">
                       {event.venue ?? 'Virtual venue'}
                     </p>
-                    <p className="mt-1 text-sm font-semibold">
+                    <p className="mt-1 text-xs sm:text-sm font-semibold text-[#17211b]/80">
                       {event.city ?? 'Online event'}
                     </p>
                   </div>
@@ -280,21 +287,20 @@ export default function EventPage({
                     )}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="mt-5 inline-block rounded-full bg-[#17211b] px-5 py-3 text-sm font-bold text-white"
+                    className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#17211b] px-5 py-3 text-xs sm:text-sm font-bold text-white transition hover:bg-[#25332b]"
                   >
-                    <div className="flex flex-row items-center justify-center">
-                      Get directions
-                      <ArrowUpRight size={18} />
-                    </div>
+                    <span>Get directions</span>
+                    <ArrowUpRight size={16} />
                   </Link>
                 )}
               </div>
             )}
           </div>
 
+          {/* Tickets Sidebar */}
           <aside
             id="tickets"
-            className={`h-fit rounded-3xl border border-[#dce1d5] bg-white p-6 transition ${
+            className={`h-fit rounded-3xl border border-[#dce1d5] bg-white p-4 sm:p-6 transition ${
               checkoutOpen ? 'ring-2 ring-[#ff765f]' : ''
             }`}
           >
