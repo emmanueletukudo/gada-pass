@@ -8,6 +8,7 @@ import { EventCategories } from '@/components/events/event-categories';
 import { EventList } from '@/components/events/event-list';
 import { useEvents } from '@/lib/hooks/useEvents';
 import { MobileAppSection } from '@/components/app-section';
+import { FaqSection } from '@/components/faq-section';
 
 export default function Home() {
   const { events, category, loading, error, setCategory } = useEvents();
@@ -123,8 +124,10 @@ export default function Home() {
             <EventList events={events} />
           )}
         </section>
-      
-        <MobileAppSection/>
+
+        <MobileAppSection />
+        <FaqSection />
+        
         <section
           id="how"
           className="border-y border-[#dce1d5] bg-[#fffef9] px-5 py-16 md:px-10"

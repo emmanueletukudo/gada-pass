@@ -109,7 +109,6 @@ export default function EventPage({
   return (
     <div className="min-h-screen">
       <main className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 md:px-10">
-        {/* Responsive Hero Section */}
         <section className="grid overflow-hidden rounded-3xl sm:rounded-4xl bg-[#ff765f] md:grid-cols-[1.1fr_0.9fr]">
           <div className="flex flex-col justify-between p-6 sm:p-10 md:p-14">
             <span className="w-fit rounded-full bg-[#fffef9] px-3 py-1 text-xs font-bold">
@@ -158,10 +157,8 @@ export default function EventPage({
           />
         </section>
 
-        {/* Content Layout Grid */}
         <div className="mt-10 grid gap-10 lg:grid-cols-[1.2fr_0.8fr]">
           <div>
-            {/* Tabs */}
             <div className="flex gap-6 overflow-x-auto border-b border-[#dce1d5] pb-4 text-sm font-bold">
               {(['About', 'Venue'] as const).map((tab) => (
                 <button
@@ -179,7 +176,6 @@ export default function EventPage({
               ))}
             </div>
 
-            {/* About Tab Content */}
             {activeTab === 'About' && (
               <div>
                 <div className="mt-8 flex items-center gap-4 p-2">
@@ -263,7 +259,6 @@ export default function EventPage({
               </div>
             )}
 
-            {/* Venue Tab Content */}
             {activeTab === 'Venue' && (
               <div>
                 <h2 className="mt-8 sm:mt-10 text-3xl sm:text-4xl font-bold tracking-[-0.04em]">
@@ -296,8 +291,6 @@ export default function EventPage({
               </div>
             )}
           </div>
-
-          {/* Tickets Sidebar */}
           <aside
             id="tickets"
             className={`h-fit rounded-3xl border border-[#dce1d5] bg-white p-4 sm:p-6 transition ${

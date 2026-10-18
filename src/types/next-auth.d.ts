@@ -7,6 +7,7 @@ declare module 'next-auth' {
       email: string;
       name: string;
       hostName: string;
+      logoUrl?: string
       phone?: string;
       accountType: string;
       firstName?: string;
@@ -24,6 +25,7 @@ declare module 'next-auth' {
     name: string;
     phone?: string;
     firstName?: string;
+    logoUrl?: string;
     lastName?: string;
     hostName: string;
     accountType: string;
@@ -39,6 +41,12 @@ declare module 'next-auth/jwt' {
     hostName: string;
     accountType: string;
     accessToken: string;
+    email: string;
+    name: string;
+    phone?: string;
+    firstName?: string;
+    logoUrl?: string;
+    lastName?: string;
   }
 }
 
