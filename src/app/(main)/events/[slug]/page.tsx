@@ -10,7 +10,6 @@ import { formatDate, SHORT_DATE_FORMAT } from '@/utils/helpers';
 const TABS = ['About', 'Venue'] as const;
 type Tab = (typeof TABS)[number];
 
-
 function DateRange({
   start,
   end,
@@ -29,22 +28,23 @@ function DateRange({
     return <span className="whitespace-nowrap">{start}</span>;
   }
 
-  return (
-    <div
-      className={
-        isHero
-          ? 'flex flex-wrap items-center gap-x-1.5 gap-y-1'
-          : 'flex flex-col gap-1'
-      }
-    >
-      <span className="flex items-baseline gap-1.5">
+  if (isHero) {
+    return (
+      <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1">
         <span className={labelClass}>From</span>
         <span className="whitespace-nowrap">{start}</span>
-      </span>
-      <span className="flex items-baseline gap-1.5">
-        <span className={labelClass}>To</span>
+        <span className={labelClass}>to</span>
         <span className="whitespace-nowrap">{end}</span>
-      </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-[2.25rem_1fr] items-baseline gap-x-2 gap-y-1.5">
+      <span className={labelClass}>From</span>
+      <span className="whitespace-nowrap">{start}</span>
+      <span className={labelClass}>To</span>
+      <span className="whitespace-nowrap">{end}</span>
     </div>
   );
 }
@@ -150,7 +150,6 @@ export default function EventPage({
   return (
     <div className="min-h-screen">
       <main className="mx-auto max-w-7xl px-4 pb-20 pt-4 sm:px-6 sm:pt-6 md:px-10">
-        {/* HERO */}
         <section className="grid overflow-hidden rounded-3xl bg-[#ff765f] sm:rounded-4xl md:grid-cols-[1.1fr_0.9fr]">
           <div className="flex min-w-0 flex-col justify-between gap-8 p-6 sm:p-10 md:p-12 lg:p-14">
             <span className="w-fit rounded-full bg-[#fffef9] px-3 py-1 text-xs font-bold">
@@ -196,9 +195,7 @@ export default function EventPage({
         </section>
 
         <div className="mt-10 grid gap-10 lg:grid-cols-[1.2fr_0.8fr]">
-          {/* LEFT COLUMN */}
           <div className="min-w-0">
-            {/* Tabs: underline sits ON the container border (no floating gap) */}
             <div
               role="tablist"
               className="flex gap-6 overflow-x-auto border-b border-[#dce1d5] text-sm font-bold"
@@ -343,7 +340,7 @@ export default function EventPage({
               </div>
             )}
           </div>
-
+          
           <aside
             id="tickets"
             className={`h-fit min-w-0 scroll-mt-6 rounded-3xl border border-[#dce1d5] bg-white p-4 transition sm:p-6 lg:sticky lg:top-6 ${

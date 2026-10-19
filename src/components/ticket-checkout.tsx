@@ -48,6 +48,54 @@ interface TicketCheckoutProps {
   tiers?: Tier[];
 }
 
+type Selection = { tier: Tier; quantity: number };
+
+function OrderSummary({
+  selections,
+  currencySymbol,
+  platformFee,
+  total,
+}: {
+  selections: Selection[];
+  currencySymbol: string;
+  platformFee: number;
+  total: number;
+}) {
+  return (
+    <div className="my-4 rounded-xl border border-[#dce1d5] bg-[#f0f1e9] p-3.5 text-sm">
+      <p className="text-lg font-bold text-[#17211b]">Order Summary</p>
+
+      <div className="mt-2 space-y-1.5 text-[#6d766d]">
+        {selections.map(({ tier, quantity }) => (
+          <div key={tier.id} className="flex justify-between gap-3">
+            <span className="min-w-0 wrap-break-word">
+              {tier.name} (x{quantity})
+            </span>
+            <span className="shrink-0 whitespace-nowrap">
+              {currencySymbol}
+              {(Number(tier.price) * quantity).toLocaleString()}
+            </span>
+          </div>
+        ))}
+        <div className="flex justify-between gap-3">
+          <span>Platform &amp; service fee</span>
+          <span className="shrink-0 whitespace-nowrap">
+            {currencySymbol}
+            {platformFee.toLocaleString()}
+          </span>
+        </div>
+        <div className="flex justify-between gap-3 border-t border-[#dce1d5] pt-2 font-bold text-[#17211b]">
+          <span>Total due (inc. fees)</span>
+          <span className="shrink-0 whitespace-nowrap">
+            {currencySymbol}
+            {total.toLocaleString()}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function TicketCheckout({ eventId, tiers = [] }: TicketCheckoutProps) {
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useCurrentUser();
@@ -79,7 +127,7 @@ export function TicketCheckout({ eventId, tiers = [] }: TicketCheckoutProps) {
     });
   };
 
-  const activeSelections = (tiers ?? [])
+  const activeSelections: Selection[] = (tiers ?? [])
     .map((tier) => ({
       tier,
       quantity: quantities[tier.id] || 0,
@@ -95,6 +143,8 @@ export function TicketCheckout({ eventId, tiers = [] }: TicketCheckoutProps) {
 
   const platformFee = subtotal > 0 ? subtotal * 0.05 + 100 : 0;
   const total = subtotal + platformFee;
+  const hasSelection = activeSelections.length > 0;
+  const isFree = hasSelection && total === 0;
 
   const {
     register,
@@ -146,15 +196,15 @@ export function TicketCheckout({ eventId, tiers = [] }: TicketCheckoutProps) {
           : guestData?.phone?.trim() || undefined,
         gender: isAuthenticated ? user?.gender || undefined : guestData?.gender,
       };
-      
+
       if (total === 0) {
         await api(`/events/${eventId}/reserve`, {
           method: 'POST',
           body: JSON.stringify(payload),
         });
 
-
         toast.success('Tickets reserved successfully! Check your email.');
+        setIsDrawerVisible(false);
         setIsDrawerOpen(false);
 
         if (isAuthenticated) {
@@ -162,7 +212,7 @@ export function TicketCheckout({ eventId, tiers = [] }: TicketCheckoutProps) {
         } else {
           reset();
           setQuantities({});
-          
+
           setTimeout(() => {
             window.location.reload();
           }, 1500);
@@ -213,79 +263,91 @@ export function TicketCheckout({ eventId, tiers = [] }: TicketCheckoutProps) {
           const available = tier.quantity - tier.soldCount;
           const currentQty = quantities[tier.id] || 0;
           const isSoldOut = available <= 0;
+          const isVip = tier.name.toLowerCase().includes('vip');
+          const isFreeTier = Number(tier.price) === 0;
 
           return (
             <div
               key={tier.id}
-              className={`flex flex-col justify-between gap-4 rounded-3xl border p-5 shadow-sm transition-all sm:flex-row sm:items-center ${
+              className={`flex flex-col gap-4 rounded-3xl border p-4 shadow-sm transition-all sm:p-5 ${
                 tier.isMultiDay
                   ? 'border-[#ff5500]/40 bg-[#fffef9]'
                   : 'border-[#e6e8e3] bg-[#ffffff]'
               }`}
             >
-              <div className="flex items-center gap-3.5">
+              {/* Top: icon + details. Always stacked from the price row so the
+                  narrow sidebar never squeezes the text column. */}
+              <div className="flex items-start gap-3.5">
                 <div
-                  className={`grid h-14 w-14 shrink-0 place-items-center rounded-2xl ${
-                    tier.name.toLocaleLowerCase().includes('vip')
-                      ? 'bg-[#ff765f]'
-                      : 'bg-[#8aa520]'
+                  className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl sm:h-14 sm:w-14 ${
+                    isVip ? 'bg-[#ff765f]' : 'bg-[#8aa520]'
                   } text-white shadow-md`}
                 >
-                  <TicketPlus className="h-6 w-6" />
+                  <TicketPlus className="h-5 w-5 sm:h-6 sm:w-6" />
                 </div>
 
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="text-xl font-bold tracking-tight text-[#1c1926]">
-                      {tier.name}
-                    </h3>
-                    {tier.isMultiDay && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-[#17211b] px-2.5 py-0.5 text-[10px] font-black text-white">
-                        <Zap className="h-3 w-3 text-[#d6f94a]" /> MULTI-DAY
-                        PASS
-                      </span>
-                    )}
-                    {tier.validDate && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-[#d6f94a]/30 px-2.5 py-0.5 text-[10px] font-bold text-[#17211b]">
-                        <Calendar className="h-3 w-3" />{' '}
-                        {new Date(tier.validDate).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                        })}
-                      </span>
-                    )}
-                  </div>
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  <h3 className="wrap-break-word text-lg font-bold leading-tight tracking-tight text-[#1c1926] sm:text-xl">
+                    {tier.name}
+                  </h3>
 
-                  <p className="text-xs text-[#73727a]">
+                  {(tier.isMultiDay || tier.validDate) && (
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {tier.isMultiDay && (
+                        <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-[#17211b] px-2.5 py-0.5 text-[10px] font-black text-white">
+                          <Zap className="h-3 w-3 text-[#d6f94a]" />
+                          MULTI-DAY PASS
+                        </span>
+                      )}
+                      {tier.validDate && (
+                        <span className="inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-[#d6f94a]/30 px-2.5 py-0.5 text-[10px] font-bold text-[#17211b]">
+                          <Calendar className="h-3 w-3" />
+                          {new Date(tier.validDate).toLocaleDateString(
+                            'en-US',
+                            { month: 'short', day: 'numeric' },
+                          )}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  <p className="text-xs leading-relaxed text-[#73727a]">
                     {tier.description ||
                       `Standard ${tier.name} access to the event.`}
                   </p>
 
-                  <div className="flex items-center gap-3 text-[11px] font-medium text-[#5c5b63]">
-                    <span className="rounded-full min-w-[100px] inline-flex bg-[#f2f4f0] px-3 py-0.5">
-                      {isSoldOut ? 'Sold Out' : `${available} remaining`}
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] font-medium text-[#5c5b63]">
+                    <span className="inline-flex whitespace-nowrap rounded-full bg-[#f2f4f0] px-3 py-1">
+                      {isSoldOut
+                        ? 'Sold out'
+                        : `${available.toLocaleString()} remaining`}
                     </span>
-                    {tier.maxScansPerDay && (
-                      <span>Max {tier.maxScansPerDay} scans/day</span>
-                    )}
+                    {tier.maxScansPerDay ? (
+                      <span className="whitespace-nowrap">
+                        Max {tier.maxScansPerDay} scans/day
+                      </span>
+                    ) : null}
                   </div>
                 </div>
               </div>
 
-              <div className="flex flex-row items-center justify-between gap-4 sm:flex-col sm:items-end">
-                <div className="text-right">
+              {/* Bottom: price + stepper */}
+              <div className="flex items-center justify-between gap-4 border-t border-dashed border-[#e6e8e3] pt-4">
+                <div>
                   <span className="block text-[10px] font-bold uppercase tracking-wider text-[#9f9fa8]">
-                    UNIT PRICE
+                    Unit price
                   </span>
-                  <span className="text-2xl font-extrabold text-[#17211b]">
-                    {currencySymbol}
-                    {Number(tier.price).toLocaleString()}
+                  <span className="text-2xl font-extrabold leading-tight text-[#17211b]">
+                    {isFreeTier
+                      ? 'Free'
+                      : `${currencySymbol}${Number(tier.price).toLocaleString()}`}
                   </span>
                 </div>
 
-                <div className="flex items-center gap-2.5 rounded-full border border-[#e3e6df] bg-[#f8f9f6] p-1.5">
+                <div className="flex shrink-0 items-center gap-2.5 rounded-full border border-[#e3e6df] bg-[#f8f9f6] p-1.5">
                   <button
                     type="button"
+                    aria-label={`Remove one ${tier.name} ticket`}
                     disabled={isProcessing || currentQty <= 0}
                     onClick={() => handleQuantityChange(tier.id, -1, available)}
                     className="grid h-8 w-8 place-items-center rounded-full bg-[#f1f3ed] text-[#8e8d96] transition hover:bg-[#e4e7df] disabled:opacity-30"
@@ -293,18 +355,22 @@ export function TicketCheckout({ eventId, tiers = [] }: TicketCheckoutProps) {
                     <Minus className="h-3.5 w-3.5" />
                   </button>
 
-                  <span className="w-5 text-center text-sm font-bold text-[#1c1926]">
+                  <span
+                    aria-live="polite"
+                    className="min-w-5 text-center text-sm font-bold text-[#1c1926]"
+                  >
                     {currentQty}
                   </span>
 
                   <button
                     type="button"
+                    aria-label={`Add one ${tier.name} ticket`}
                     disabled={
                       isProcessing || isSoldOut || currentQty >= available
                     }
                     onClick={() => handleQuantityChange(tier.id, 1, available)}
                     className={`grid h-8 w-8 place-items-center rounded-full ${
-                      tier.name.toLocaleLowerCase().includes('vip')
+                      isVip
                         ? 'bg-[#ff765f] hover:bg-[#d2614d]'
                         : 'bg-[#8aa520] hover:bg-[#687c17]'
                     } text-white shadow-sm transition disabled:opacity-30`}
@@ -317,50 +383,29 @@ export function TicketCheckout({ eventId, tiers = [] }: TicketCheckoutProps) {
           );
         })}
 
-        {isAuthenticated && total !== 0 && (
-          <div className="my-4 rounded-xl border border-[#dce1d5] bg-[#f0f1e9] p-3.5 text-xs">
-            <p className="font-bold text-lg text-[#17211b]">Order Summary</p>
-
-            <div className="mt-2 space-y-1.5 text-[#6d766d]">
-              {activeSelections.map(({ tier, quantity }) => (
-                <div key={tier.id} className="flex justify-between">
-                  <span className="text-md">
-                    {tier.name} (x{quantity})
-                  </span>
-                  <span className="text-md">
-                    {currencySymbol}{' '}
-                    {(Number(tier.price) * quantity).toLocaleString()}
-                  </span>
-                </div>
-              ))}
-              <div className="flex justify-between">
-                <span className="text-md">Platform & Service fee</span>
-                <span className="text-md">
-                  {currencySymbol} {Number(platformFee).toLocaleString()}
-                </span>
-              </div>
-              <div className="flex justify-between border-t border-[#dce1d5] pt-2 font-bold text-[#17211b]">
-                <span className="text-md">Total Due (inc. fees)</span>
-                <span className="text-md">
-                  {currencySymbol} {total.toLocaleString()}
-                </span>
-              </div>
-            </div>
-          </div>
+        {isAuthenticated && hasSelection && total !== 0 && (
+          <OrderSummary
+            selections={activeSelections}
+            currencySymbol={currencySymbol}
+            platformFee={platformFee}
+            total={total}
+          />
         )}
 
         <button
           type="button"
-          disabled={isProcessing || isLoading || activeSelections.length === 0}
+          disabled={isProcessing || isLoading || !hasSelection}
           onClick={handleCheckoutClick}
           className="w-full rounded-full bg-[#1c1926] py-3.5 text-sm font-bold text-white transition hover:bg-[#2b273b] disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isProcessing ? (
-            <Loader2 className="h-4 w-4 animate-spin text-[#d6f94a] mx-auto" />
-          ) : total === 0 ? (
-            <span>Reserve Tickets</span>
+            <Loader2 className="mx-auto h-4 w-4 animate-spin text-[#d6f94a]" />
+          ) : !hasSelection ? (
+            <span>Select tickets</span>
+          ) : isFree ? (
+            <span>Reserve tickets</span>
           ) : (
-            <span>Continue to Checkout</span>
+            <span>Continue to checkout</span>
           )}
         </button>
       </div>
@@ -373,63 +418,40 @@ export function TicketCheckout({ eventId, tiers = [] }: TicketCheckoutProps) {
           onClick={closeDrawer}
         >
           <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Guest checkout"
             onClick={(e) => e.stopPropagation()}
-            className={`relative flex h-full w-full max-w-md flex-col justify-between overflow-y-auto bg-[#fffef9] p-6 shadow-2xl transition-transform duration-300 ease-out ${
+            className={`relative flex h-dvh w-full max-w-md flex-col overflow-y-auto bg-[#fffef9] p-5 shadow-2xl transition-transform duration-300 ease-out sm:p-6 ${
               isDrawerVisible ? 'translate-x-0' : 'translate-x-full'
             }`}
           >
-            <div>
+            <div className="flex-1">
               <div className="flex items-center justify-between border-b border-[#dce1d5] pb-4">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-xl font-bold text-[#17211b]">
-                    Guest Checkout
-                  </h2>
-                </div>
+                <h2 className="text-xl font-bold text-[#17211b]">
+                  Guest checkout
+                </h2>
                 <button
                   type="button"
+                  aria-label="Close"
                   onClick={closeDrawer}
-                  className="rounded-full p-1.5 text-[#6d766d] bg-[#f0f1e9] hover:bg-black hover:text-white"
+                  className="rounded-full bg-[#f0f1e9] p-1.5 text-[#6d766d] hover:bg-black hover:text-white"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
 
-              <div className="my-4 rounded-xl border border-[#dce1d5] bg-[#f0f1e9] p-3.5 text-xs">
-                <p className="font-bold text-lg text-[#17211b]">
-                  Order Summary
-                </p>
-
-                <div className="mt-2 space-y-1.5 text-[#6d766d]">
-                  {activeSelections.map(({ tier, quantity }) => (
-                    <div key={tier.id} className="flex justify-between">
-                      <span className="text-md">
-                        {tier.name} (x{quantity})
-                      </span>
-                      <span className="text-md">
-                        {currencySymbol}{' '}
-                        {(Number(tier.price) * quantity).toLocaleString()}
-                      </span>
-                    </div>
-                  ))}
-                  <div className="flex justify-between">
-                    <span className="text-md">Platform & Service fee</span>
-                    <span className="text-md">
-                      {currencySymbol} {Number(platformFee).toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="flex justify-between border-t border-[#dce1d5] pt-2 font-bold text-[#17211b]">
-                    <span className="text-md">Total Due (inc. fees)</span>
-                    <span className="text-md">
-                      {currencySymbol} {total.toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-              </div>
+              <OrderSummary
+                selections={activeSelections}
+                currencySymbol={currencySymbol}
+                platformFee={platformFee}
+                total={total}
+              />
 
               <form
                 id="guest-checkout-form"
                 onSubmit={handleSubmit(processCheckout)}
-                className="space-y-4 mt-7"
+                className="mt-6 space-y-4"
               >
                 <GadaInput
                   register={register}
@@ -461,7 +483,7 @@ export function TicketCheckout({ eventId, tiers = [] }: TicketCheckoutProps) {
                 />
 
                 <div className="space-y-1.5">
-                  <label className="block text-md text-[#17211b]">
+                  <label className="block text-sm font-medium text-[#17211b]">
                     Gender <span className="text-[#c34837]">*</span>
                   </label>
                   <div className="grid grid-cols-3 gap-2">
@@ -475,6 +497,7 @@ export function TicketCheckout({ eventId, tiers = [] }: TicketCheckoutProps) {
                         <button
                           key={item.value}
                           type="button"
+                          aria-pressed={isActive}
                           onClick={() =>
                             setValue(
                               'gender',
@@ -502,7 +525,8 @@ export function TicketCheckout({ eventId, tiers = [] }: TicketCheckoutProps) {
               </form>
             </div>
 
-            <div className="border-t border-[#dce1d5] pt-4 mt-6">
+            {/* Sticky footer so the CTA is always reachable on short screens */}
+            <div className="sticky bottom-0 -mx-5 mt-6 border-t border-[#dce1d5] bg-[#fffef9] px-5 pb-1 pt-4 sm:-mx-6 sm:px-6">
               <button
                 type="submit"
                 form="guest-checkout-form"
@@ -512,7 +536,7 @@ export function TicketCheckout({ eventId, tiers = [] }: TicketCheckoutProps) {
                 {isProcessing ? (
                   <Loader2 className="h-4 w-4 animate-spin text-[#d6f94a]" />
                 ) : (
-                  <span>Pay Now</span>
+                  <span>{isFree ? 'Reserve now' : 'Pay now'}</span>
                 )}
               </button>
             </div>
