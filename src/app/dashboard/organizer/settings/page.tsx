@@ -25,7 +25,7 @@ interface SettlementAccountValues {
 export default function OrganizerSettingsPage() {
   const { user, isLoading: isUserLoading } = useCurrentUser();
   const [isSaving, setIsSaving] = useState(false);
-  const [currentLogoUrl, setCurrentLogoUrl] = useState<string>("")
+  const [currentLogoUrl, setCurrentLogoUrl] = useState<string>('');
 
   const {
     register: field,
@@ -78,9 +78,10 @@ export default function OrganizerSettingsPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <div className=" flex flex-row justify-center items-start gap-10 space-y-8 mt-10">
-        <div>
+    <div className="space-y-8 px-4 sm:px-6 lg:px-0">
+      {/* Responsive layout wrapper: stacks on mobile/tablet, side-by-side on lg+ desktop */}
+      <div className="flex flex-col lg:flex-row justify-center items-center lg:items-start gap-10 mt-6 lg:mt-10">
+        <div className="w-full max-w-lg lg:max-w-none">
           <h2 className="text-xl font-bold tracking-tight">Settings</h2>
           <form
             onSubmit={handleSubmit(onSettingsSubmit)}
@@ -113,14 +114,15 @@ export default function OrganizerSettingsPage() {
             <div className="pt-4 border-[#dce1d5] flex justify-end">
               <button
                 disabled={isSaving}
-                className="rounded-full bg-[#17211b] px-6 py-3 text-sm font-bold text-white transition disabled:opacity-40 hover:bg-[#25332b]"
+                className="w-full sm:w-auto rounded-full bg-[#17211b] px-6 py-3 text-sm font-bold text-white transition disabled:opacity-40 hover:bg-[#25332b]"
               >
                 {isSaving ? 'Saving Configurations...' : 'Update Settings'}
               </button>
             </div>
           </form>
         </div>
-        <div className="w-full max-w-lg mt-10">
+
+        <div className="w-full max-w-lg mt-0 lg:mt-10">
           <PaymentSettingsStep mode="settings" form={settlementForm} />
         </div>
       </div>

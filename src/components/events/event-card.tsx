@@ -2,6 +2,7 @@ import { ApiEvent, eventCover } from '@/lib/api';
 import { MoveUpIcon, MoveUpRight } from 'lucide-react';
 import Link from 'next/link';
 import { FC } from 'react';
+import {formatDate, SHORT_DATE_FORMAT} from "@/utils/helpers"
 
 type EventCardProps = {
   event: ApiEvent;
@@ -9,6 +10,10 @@ type EventCardProps = {
 };
 
 export const EventCard: FC<EventCardProps> = ({ event, index }) => {
+  const formtedStartDate = formatDate(event.startsAt, SHORT_DATE_FORMAT);
+  const formatedEndDate = formatDate(event.endsAt, SHORT_DATE_FORMAT);
+
+
   return (
     <Link
       href={`/events/${event.slug}`}
@@ -65,7 +70,7 @@ export const EventCard: FC<EventCardProps> = ({ event, index }) => {
             From {event.ticketTiers[0]?.currency ?? 'NGN'}{' '}
             {Number(event.ticketTiers[0]?.price ?? 0).toLocaleString()}{' '}
           </p>
-          <MoveUpRight className="text-lg"/>
+          <MoveUpRight className="text-lg" />
         </div>
       </div>
     </Link>

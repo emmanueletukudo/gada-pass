@@ -223,7 +223,7 @@ export default function OrganizerDashboardPage() {
                     </span>
                     <span>&bull;</span>
                     <span className="uppercase font-semibold">
-                      {evt.eventType}
+                      {evt.eventType.replace("_", " ")}
                     </span>
                   </div>
                 </div>
@@ -240,7 +240,7 @@ export default function OrganizerDashboardPage() {
                   </span>
 
                   <Link
-                    href={`/dashboard/organizer/events/${evt.id}/dashboard`}
+                    href={`/dashboard/organizer/events/${evt.id}`}
                     className="inline-flex items-center gap-1 text-xs font-bold text-[#17211b] hover:underline"
                   >
                     <span>Analytics</span>

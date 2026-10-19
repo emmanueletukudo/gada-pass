@@ -21,6 +21,7 @@ import { GadaInput } from '@/components/common/gada-inputs';
 import { toast } from 'sonner';
 import { useCheckoutStore, Tier } from '@/stores/use-checkout-store';
 import { Logo } from '../logo';
+import { formatDate, formatDateRange } from '@/utils/helpers';
 
 const guestCheckoutSchema = z.object({
   fullName: z.string().min(2, 'Full name must be at least 2 characters'),
@@ -36,6 +37,7 @@ export type GuestCheckoutFormData = z.infer<typeof guestCheckoutSchema>;
 interface Organizer {
   hostName: string;
   phone: string;
+  logoUrl: string;
 }
 export interface EmbedEventProps {
   event: {
@@ -43,6 +45,7 @@ export interface EmbedEventProps {
     name: string;
     coverImage?: string;
     startsAt: string;
+    endsAt: string;
     venue?: string;
     banner: string;
     organizer: Organizer;
@@ -71,10 +74,11 @@ export default function EmbedEventCard({ event }: EmbedEventProps) {
     (state) => state.getCurrencySymbol,
   );
 
-
   useEffect(() => {
     initCheckout(event.id, event.ticketTiers || []);
   }, [event, initCheckout]);
+
+  console.log(event);
 
   const activeSelections = getActiveSelections();
   const platformFee = getPlatformFee();
@@ -88,6 +92,9 @@ export default function EmbedEventCard({ event }: EmbedEventProps) {
     hour: '2-digit',
     minute: '2-digit',
   });
+
+  const foramtedStartDate = formatDate(event.startsAt);
+  const formatedEndDate = formatDate(event.endsAt);
 
   const {
     register,
@@ -189,7 +196,7 @@ export default function EmbedEventCard({ event }: EmbedEventProps) {
             className="object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-          <div className="absolute bottom-3 left-4 right-4">
+          <div className="absolute bottom-3 left-4 right-4 inline-flex items-center gap-2">
             <span className="inline-block rounded-full bg-[#d6f94a] px-3 py-1 text-[10px] font-black uppercase text-[#17211b]">
               Hosted by {event.organizer.hostName}
             </span>
@@ -203,12 +210,27 @@ export default function EmbedEventCard({ event }: EmbedEventProps) {
             {event.name}
           </h2>
           <div className="mt-2 space-y-1 text-xs text-[#6d766d]">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-3.5 w-3.5 text-[#ff5500]" />
-              <span>{formattedDate}</span>
+            <div className="inline-flex items-center gap-2  text-xs font-bold text-[#17211b]">
+              <Calendar className="h-4 w-4 text-[#ff5500] shrink-0" />
+              <span>
+                {foramtedStartDate === formatedEndDate ? (
+                  foramtedStartDate
+                ) : (
+                  <>
+                    <span className="text-[10px] uppercase font-semibold text-[#6d766d] tracking-wider mr-1">
+                      From
+                    </span>
+                    {foramtedStartDate}
+                    <span className="text-[10px] uppercase font-semibold text-[#6d766d] tracking-wider mx-1">
+                      to
+                    </span>
+                    {formatedEndDate}
+                  </>
+                )}
+              </span>
             </div>
             <div className="flex items-center gap-2">
-              <MapPin className="h-3.5 w-3.5 text-[#ff5500]" />
+              <MapPin className="h-4 w-4 text-[#ff5500]" />
               <span className="truncate">
                 {event.isVirtual
                   ? 'Online Event'
