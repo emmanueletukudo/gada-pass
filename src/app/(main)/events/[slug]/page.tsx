@@ -7,6 +7,48 @@ import { ArrowUpRight, Building2 } from 'lucide-react';
 import { TicketCheckout } from '@/components/ticket-checkout';
 import { formatDate, SHORT_DATE_FORMAT } from '@/utils/helpers';
 
+const TABS = ['About', 'Venue'] as const;
+type Tab = (typeof TABS)[number];
+
+
+function DateRange({
+  start,
+  end,
+  variant,
+}: {
+  start: string;
+  end: string;
+  variant: 'hero' | 'card';
+}) {
+  const isHero = variant === 'hero';
+  const labelClass = isHero
+    ? 'text-[10px] font-semibold uppercase tracking-wider text-white'
+    : 'text-[10px] font-semibold uppercase tracking-wider text-[#6d766d]';
+
+  if (start === end) {
+    return <span className="whitespace-nowrap">{start}</span>;
+  }
+
+  return (
+    <div
+      className={
+        isHero
+          ? 'flex flex-wrap items-center gap-x-1.5 gap-y-1'
+          : 'flex flex-col gap-1'
+      }
+    >
+      <span className="flex items-baseline gap-1.5">
+        <span className={labelClass}>From</span>
+        <span className="whitespace-nowrap">{start}</span>
+      </span>
+      <span className="flex items-baseline gap-1.5">
+        <span className={labelClass}>To</span>
+        <span className="whitespace-nowrap">{end}</span>
+      </span>
+    </div>
+  );
+}
+
 export default function EventPage({
   params,
 }: {
@@ -16,7 +58,7 @@ export default function EventPage({
   const [error, setError] = useState('');
   const [slug, setSlug] = useState('');
   const [checkoutOpen, setCheckoutOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'About' | 'Venue'>('About');
+  const [activeTab, setActiveTab] = useState<Tab>('About');
 
   useEffect(() => {
     void params.then(({ slug: nextSlug }) => setSlug(nextSlug));
@@ -53,12 +95,8 @@ export default function EventPage({
   if (!event)
     return (
       <div className="min-h-screen">
-        <header className="mx-auto flex max-w-7xl items-center justify-between px-4 py-6 sm:px-6 md:px-10">
-          <div className="h-6 w-24 animate-pulse rounded-full bg-gray-200" />
-        </header>
-
-        <main className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 md:px-10">
-          <section className="grid overflow-hidden rounded-3xl bg-gray-200 md:grid-cols-[1.1fr_0.9fr] animate-pulse">
+        <main className="mx-auto max-w-7xl px-4 pb-20 pt-4 sm:px-6 sm:pt-6 md:px-10">
+          <section className="grid animate-pulse overflow-hidden rounded-3xl bg-gray-200 md:grid-cols-[1.1fr_0.9fr]">
             <div className="flex min-h-87.5 flex-col justify-between p-6 sm:p-10 md:p-14">
               <div className="h-6 w-28 rounded-full bg-gray-300" />
               <div className="mt-8 space-y-4">
@@ -100,48 +138,38 @@ export default function EventPage({
   const hostName = event.organizer?.hostName || 'Event Host';
   const hostInitials = hostName
     .split(' ')
+    .filter(Boolean)
     .map((p) => p[0])
     .join('')
     .toUpperCase()
     .slice(0, 2);
 
-  const foramtedStartDate = formatDate(event.startsAt, SHORT_DATE_FORMAT);
-  const formatedEndDate = formatDate(event.endsAt, SHORT_DATE_FORMAT);
+  const formattedStartDate = formatDate(event.startsAt, SHORT_DATE_FORMAT);
+  const formattedEndDate = formatDate(event.endsAt, SHORT_DATE_FORMAT);
 
   return (
     <div className="min-h-screen">
-      <main className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 md:px-10">
-        <section className="grid overflow-hidden rounded-3xl sm:rounded-4xl bg-[#ff765f] md:grid-cols-[1.1fr_0.9fr]">
-          <div className="flex flex-col justify-between p-6 sm:p-10 md:p-14">
+      <main className="mx-auto max-w-7xl px-4 pb-20 pt-4 sm:px-6 sm:pt-6 md:px-10">
+        {/* HERO */}
+        <section className="grid overflow-hidden rounded-3xl bg-[#ff765f] sm:rounded-4xl md:grid-cols-[1.1fr_0.9fr]">
+          <div className="flex min-w-0 flex-col justify-between gap-8 p-6 sm:p-10 md:p-12 lg:p-14">
             <span className="w-fit rounded-full bg-[#fffef9] px-3 py-1 text-xs font-bold">
               {event.category.name}
             </span>
-            <div className="mt-6 md:mt-0">
-              {/* Hero Date Range Display */}
-              <div className="mb-3 mt-2 flex flex-wrap items-center gap-1.5 text-xs font-bold uppercase tracking-[0.2em]">
-                {foramtedStartDate === formatedEndDate ? (
-                  <span className="whitespace-nowrap">{foramtedStartDate}</span>
-                ) : (
-                  <div className="flex flex-wrap items-center gap-1">
-                    <span className="text-[10px] uppercase font-semibold text-white tracking-wider">
-                      From
-                    </span>
-                    <span className="whitespace-nowrap">
-                      {foramtedStartDate}
-                    </span>
-                    <span className="text-[10px] uppercase font-semibold text-white tracking-wider">
-                      to
-                    </span>
-                    <span className="whitespace-nowrap">{formatedEndDate}</span>
-                  </div>
-                )}
+            <div>
+              <div className="mb-3 text-xs font-bold uppercase tracking-[0.2em]">
+                <DateRange
+                  start={formattedStartDate}
+                  end={formattedEndDate}
+                  variant="hero"
+                />
               </div>
 
-              <h1 className="text-4xl sm:text-6xl md:text-8xl font-bold leading-[0.9] tracking-[-0.06em] wrap-break-word">
+              <h1 className="wrap-break-word text-4xl font-bold leading-[0.95] tracking-tighter sm:text-6xl md:text-6xl lg:text-7xl xl:text-8xl">
                 {event.name}
                 <span className="text-[#d6f94a]">.</span>
               </h1>
-              <p className="mt-4 sm:mt-6 max-w-xl text-xs sm:text-sm font-semibold leading-relaxed">
+              <p className="mt-4 line-clamp-4 max-w-xl text-xs font-semibold leading-relaxed sm:mt-6 sm:text-sm">
                 {event.description}
               </p>
               <button
@@ -152,39 +180,40 @@ export default function EventPage({
                     .getElementById('tickets')
                     ?.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }}
-                className="mt-6 sm:mt-8 rounded-full bg-[#17211b] px-6 py-3 text-xs sm:text-sm font-bold text-white transition hover:bg-[#25332b]"
+                className="mt-6 rounded-full bg-[#17211b] px-6 py-3 text-xs font-bold text-white transition hover:bg-[#25332b] sm:mt-8 sm:text-sm"
               >
                 Get tickets
               </button>
             </div>
           </div>
           <div
-            className="relative flex min-h-62.5 sm:min-h-87.5 md:min-h-full flex-col justify-end overflow-hidden bg-[#d6f94a] p-6 sm:p-10 md:p-14"
-            style={
-              cover
-                ? {
-                    backgroundImage: `url(${cover})`,
-                    width: '100%',
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center',
-                  }
-                : undefined
-            }
+            className="min-h-62.5 bg-[#d6f94a] bg-cover bg-center sm:min-h-87.5 md:min-h-full"
+            style={cover ? { backgroundImage: `url(${cover})` } : undefined}
+            role="img"
+            aria-label={cover ? `${event.name} cover` : undefined}
+            aria-hidden={cover ? undefined : true}
           />
         </section>
 
         <div className="mt-10 grid gap-10 lg:grid-cols-[1.2fr_0.8fr]">
-          <div>
-            <div className="flex gap-6 overflow-x-auto border-b border-[#dce1d5] pb-4 text-sm font-bold">
-              {(['About', 'Venue'] as const).map((tab) => (
+          {/* LEFT COLUMN */}
+          <div className="min-w-0">
+            {/* Tabs: underline sits ON the container border (no floating gap) */}
+            <div
+              role="tablist"
+              className="flex gap-6 overflow-x-auto border-b border-[#dce1d5] text-sm font-bold"
+            >
+              {TABS.map((tab) => (
                 <button
                   key={tab}
                   type="button"
+                  role="tab"
+                  aria-selected={activeTab === tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`whitespace-nowrap pb-4 transition-colors ${
+                  className={`-mb-px whitespace-nowrap border-b-2 pb-3 transition-colors ${
                     activeTab === tab
-                      ? 'border-b-2 border-[#ff765f] text-[#17211b]'
-                      : 'text-[#6d766d] hover:text-[#17211b]'
+                      ? 'border-[#ff765f] text-[#17211b]'
+                      : 'border-transparent text-[#6d766d] hover:text-[#17211b]'
                   }`}
                 >
                   {tab}
@@ -194,37 +223,37 @@ export default function EventPage({
 
             {activeTab === 'About' && (
               <div>
-                <div className="mt-8 flex items-center gap-4 p-2">
-                  <div className="relative flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center overflow-hidden border text-white">
+                <div className="mt-8 flex items-center gap-4">
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[#dce1d5] bg-white sm:h-16 sm:w-16">
                     {event.organizer?.logoUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={mediaUrl(event.organizer.logoUrl)}
                         alt={hostName}
-                        className="h-full w-full object-cover"
+                        className="h-full w-full object-contain"
                       />
-                    ) : (
-                      <span className="text-sm sm:text-base font-bold">
-                        {hostInitials || (
-                          <Building2 className="h-5 w-5 sm:h-6 sm:w-6" />
-                        )}
+                    ) : hostInitials ? (
+                      <span className="text-sm font-bold text-[#17211b] sm:text-base">
+                        {hostInitials}
                       </span>
+                    ) : (
+                      <Building2 className="h-5 w-5 text-[#17211b] sm:h-6 sm:w-6" />
                     )}
                   </div>
-                  <div>
-                    <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.15em] text-[#6d766d]">
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#6d766d] sm:text-xs">
                       Hosted by
                     </p>
-                    <h3 className="text-base sm:text-lg font-bold text-[#17211b]">
+                    <h3 className="wrap-break-word text-base font-bold text-[#17211b] sm:text-lg">
                       {hostName}
                     </h3>
                   </div>
                 </div>
 
-                <h2 className="mt-8 sm:mt-10 text-2xl sm:text-3xl font-bold tracking-[-0.04em]">
+                <h2 className="mt-8 text-2xl font-bold tracking-[-0.04em] sm:mt-10 sm:text-3xl">
                   About the event
                 </h2>
-                <p className="mt-4 sm:mt-5 max-w-xl text-xs sm:text-sm leading-6 sm:leading-7 text-[#6d766d]">
+                <p className="mt-4 max-w-xl whitespace-pre-line text-xs leading-6 text-[#6d766d] sm:mt-5 sm:text-sm sm:leading-7">
                   {event.description}
                 </p>
 
@@ -236,56 +265,46 @@ export default function EventPage({
                         key={src}
                         src={src}
                         alt=""
-                        className="h-28 sm:h-32 w-full rounded-xl object-cover"
+                        className="h-28 w-full rounded-xl object-cover sm:h-32"
                       />
                     ))}
                   </div>
                 )}
 
-                <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-3">
-                  <div className="rounded-xl border border-[#dce1d5] p-4 bg-white">
-                    <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.15em] text-[#6d766d]">
+                <div className="mt-8 grid grid-cols-[repeat(auto-fit,minmax(10rem,1fr))] gap-3">
+                  <div className="min-w-0 rounded-xl border border-[#dce1d5] bg-white p-4">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#6d766d] sm:text-xs">
                       When
                     </p>
-
-                    {/* WHEN Date Range Display with robust text wrapping */}
-                    <div className="mt-2 flex flex-wrap items-center gap-1 text-xs font-bold text-[#17211b]">
-                      {foramtedStartDate === formatedEndDate ? (
-                        <span className="whitespace-nowrap">
-                          {foramtedStartDate}
-                        </span>
-                      ) : (
-                        <div className="flex flex-wrap items-center gap-1">
-                          <span className="text-[9px] uppercase font-semibold text-[#6d766d] tracking-wider">
-                            From
-                          </span>
-                          <span className="whitespace-nowrap">
-                            {foramtedStartDate}
-                          </span>
-                          <span className="text-[9px] uppercase font-semibold text-[#6d766d] tracking-wider">
-                            to
-                          </span>
-                          <span className="whitespace-nowrap">
-                            {formatedEndDate}
-                          </span>
-                        </div>
-                      )}
+                    <div className="mt-2 text-xs font-bold text-[#17211b] sm:text-sm">
+                      <DateRange
+                        start={formattedStartDate}
+                        end={formattedEndDate}
+                        variant="card"
+                      />
                     </div>
                   </div>
-                  <div className="rounded-xl border border-[#dce1d5] p-4 bg-white">
-                    <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.15em] text-[#6d766d]">
+                  <div className="min-w-0 rounded-xl border border-[#dce1d5] bg-white p-4">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#6d766d] sm:text-xs">
                       Where
                     </p>
-                    <p className="mt-2 text-xs sm:text-sm font-bold text-[#17211b] truncate">
+                    <p className="mt-2 wrap-break-word text-xs font-bold text-[#17211b] sm:text-sm">
                       {event.city ?? 'Online'}
                     </p>
+                    {event.venue && (
+                      <p className="mt-0.5 wrap-break-word text-xs text-[#6d766d]">
+                        {event.venue}
+                      </p>
+                    )}
                   </div>
-                  <div className="rounded-xl border border-[#dce1d5] p-4 bg-white">
-                    <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.15em] text-[#6d766d]">
+                  <div className="min-w-0 rounded-xl border border-[#dce1d5] bg-white p-4">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#6d766d] sm:text-xs">
                       Capacity
                     </p>
-                    <p className="mt-2 text-xs sm:text-sm font-bold text-[#17211b]">
-                      {event.capacity ?? 'Open'}
+                    <p className="mt-2 text-xs font-bold text-[#17211b] sm:text-sm">
+                      {event.capacity != null
+                        ? event.capacity.toLocaleString()
+                        : 'Open'}
                     </p>
                   </div>
                 </div>
@@ -294,15 +313,15 @@ export default function EventPage({
 
             {activeTab === 'Venue' && (
               <div>
-                <h2 className="mt-8 sm:mt-10 text-3xl sm:text-4xl font-bold tracking-[-0.04em]">
+                <h2 className="mt-8 text-3xl font-bold tracking-[-0.04em] sm:mt-10 sm:text-4xl">
                   Find your way there.
                 </h2>
-                <div className="mt-8 grid min-h-55 sm:min-h-64 place-items-center rounded-2xl bg-[#7ca9ff] p-6 text-center">
-                  <div>
-                    <p className="mt-3 text-xl sm:text-2xl font-bold text-[#17211b]">
+                <div className="mt-8 grid min-h-55 place-items-center rounded-2xl bg-[#7ca9ff] p-6 text-center sm:min-h-64">
+                  <div className="min-w-0">
+                    <p className="wrap-break-word text-xl font-bold text-[#17211b] sm:text-2xl">
                       {event.venue ?? 'Virtual venue'}
                     </p>
-                    <p className="mt-1 text-xs sm:text-sm font-semibold text-[#17211b]/80">
+                    <p className="mt-1 text-xs font-semibold text-[#17211b]/80 sm:text-sm">
                       {event.city ?? 'Online event'}
                     </p>
                   </div>
@@ -315,7 +334,7 @@ export default function EventPage({
                     )}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#17211b] px-5 py-3 text-xs sm:text-sm font-bold text-white transition hover:bg-[#25332b]"
+                    className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#17211b] px-5 py-3 text-xs font-bold text-white transition hover:bg-[#25332b] sm:text-sm"
                   >
                     <span>Get directions</span>
                     <ArrowUpRight size={16} />
@@ -324,9 +343,10 @@ export default function EventPage({
               </div>
             )}
           </div>
+
           <aside
             id="tickets"
-            className={`h-fit rounded-3xl border border-[#dce1d5] bg-white p-4 sm:p-6 transition ${
+            className={`h-fit min-w-0 scroll-mt-6 rounded-3xl border border-[#dce1d5] bg-white p-4 transition sm:p-6 lg:sticky lg:top-6 ${
               checkoutOpen ? 'ring-2 ring-[#ff765f]' : ''
             }`}
           >
