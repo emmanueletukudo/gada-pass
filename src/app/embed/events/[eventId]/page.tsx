@@ -16,7 +16,7 @@ export async function generateMetadata({
 
   try {
     const event = await api<EmbedEventProps['event']>(
-      `/events/${eventId}/public`,
+      `/events/${eventId}`,
     );
 
     return {

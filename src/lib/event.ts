@@ -238,10 +238,10 @@ export const createSetlementAccounts = async (input: SetlementAccount) => {
 
 export const getSetlementAccounts = async () => {
   try {
-    const res = await api<SetlementAccount[]>('/settlement-accounts', {
+    const res = await api<SetlementAccount[]>('/settlement-accounts/organization', {
       method: 'GET',
     });
-
+    
     return res;
   } catch (error) {
     const message = formatErrorMessage(

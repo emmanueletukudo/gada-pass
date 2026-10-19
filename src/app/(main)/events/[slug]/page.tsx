@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { api, eventCover, mediaUrl, type ApiEvent } from '@/lib/api';
 import { ArrowUpRight, Building2 } from 'lucide-react';
 import { TicketCheckout } from '@/components/ticket-checkout';
+import { formatDate, SHORT_DATE_FORMAT } from '@/utils/helpers';
 
 export default function EventPage({
   params,
@@ -60,7 +61,7 @@ export default function EventPage({
 
         <main className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 md:px-10">
           <section className="grid overflow-hidden rounded-3xl bg-gray-200 md:grid-cols-[1.1fr_0.9fr] animate-pulse">
-            <div className="flex min-h-[350px] flex-col justify-between p-6 sm:p-10 md:p-14">
+            <div className="flex min-h-87.5 flex-col justify-between p-6 sm:p-10 md:p-14">
               <div className="h-6 w-28 rounded-full bg-gray-300" />
               <div className="mt-8 space-y-4">
                 <div className="h-4 w-36 rounded bg-gray-300" />
@@ -69,7 +70,7 @@ export default function EventPage({
                 <div className="h-10 w-32 rounded-full bg-gray-300" />
               </div>
             </div>
-            <div className="min-h-[250px] bg-gray-300" />
+            <div className="min-h-62.5 bg-gray-300" />
           </section>
 
           <div className="mt-10 grid gap-10 lg:grid-cols-[1.2fr_0.8fr]">
@@ -106,6 +107,9 @@ export default function EventPage({
     .toUpperCase()
     .slice(0, 2);
 
+  const foramtedStartDate = formatDate(event.startsAt, SHORT_DATE_FORMAT);
+  const formatedEndDate = formatDate(event.endsAt, SHORT_DATE_FORMAT);
+
   return (
     <div className="min-h-screen">
       <main className="mx-auto max-w-7xl px-4 pb-20 sm:px-6 md:px-10">
@@ -115,13 +119,24 @@ export default function EventPage({
               {event.category.name}
             </span>
             <div className="mt-6 md:mt-0">
-              <p className="mb-3 text-xs font-bold uppercase tracking-[0.2em]">
-                {new Date(event.startsAt).toLocaleString('en-NG', {
-                  dateStyle: 'full',
-                  timeStyle: 'short',
-                })}
+              <p className="mb-3 text-xs mt-2 font-bold uppercase tracking-[0.2em]">
+                {foramtedStartDate === formatedEndDate ? (
+                  foramtedStartDate
+                ) : (
+                  <>
+                    <span className="text-[10px] uppercase font-semibold text-white tracking-wider mr-1">
+                      From
+                    </span>
+                    {foramtedStartDate}
+                    <span className="text-[10px] uppercase font-semibold text-white tracking-wider mx-1">
+                      to
+                    </span>
+                    {formatedEndDate}
+                  </>
+                )}
+
               </p>
-              <h1 className="text-4xl sm:text-6xl md:text-8xl font-bold leading-[0.9] tracking-[-0.06em] break-words">
+              <h1 className="text-4xl sm:text-6xl md:text-8xl font-bold leading-[0.9] tracking-[-0.06em] wrap-break-word">
                 {event.name}
                 <span className="text-[#d6f94a]">.</span>
               </h1>
@@ -143,7 +158,7 @@ export default function EventPage({
             </div>
           </div>
           <div
-            className="relative flex min-h-[250px] sm:min-h-[350px] md:min-h-full flex-col justify-end overflow-hidden bg-[#d6f94a] p-6 sm:p-10 md:p-14"
+            className="relative flex min-h-62.5 sm:min-h-87.5 md:min-h-full flex-col justify-end overflow-hidden bg-[#d6f94a] p-6 sm:p-10 md:p-14"
             style={
               cover
                 ? {
@@ -179,7 +194,7 @@ export default function EventPage({
             {activeTab === 'About' && (
               <div>
                 <div className="mt-8 flex items-center gap-4 p-2">
-                  <div className="relative flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-[#ff765f] bg-[#17211b] text-white">
+                  <div className="relative flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center overflow-hidden border text-white">
                     {event.organizer?.logoUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -231,13 +246,25 @@ export default function EventPage({
                     <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.15em] text-[#6d766d]">
                       When
                     </p>
-                    <p className="mt-2 text-xs sm:text-sm font-bold text-[#17211b]">
-                      {new Date(event.startsAt).toLocaleDateString('en-NG', {
-                        weekday: 'short',
-                        day: 'numeric',
-                        month: 'short',
-                      })}
-                    </p>
+
+                    <div className="inline-flex items-center gap-2 text-xs font-bold text-[#17211b]">
+                      <span>
+                        {foramtedStartDate === formatedEndDate ? (
+                          foramtedStartDate
+                        ) : (
+                          <>
+                            <span className="text-[10px] uppercase font-semibold text-[#6d766d] tracking-wider mr-1">
+                              From
+                            </span>
+                            {foramtedStartDate}
+                            <span className="text-[10px] uppercase font-semibold text-[#6d766d] tracking-wider mx-1">
+                              to
+                            </span>
+                            {formatedEndDate}
+                          </>
+                        )}
+                      </span>
+                    </div>
                   </div>
                   <div className="rounded-xl border border-[#dce1d5] p-4 bg-white">
                     <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.15em] text-[#6d766d]">
@@ -264,7 +291,7 @@ export default function EventPage({
                 <h2 className="mt-8 sm:mt-10 text-3xl sm:text-4xl font-bold tracking-[-0.04em]">
                   Find your way there.
                 </h2>
-                <div className="mt-8 grid min-h-[220px] sm:min-h-64 place-items-center rounded-2xl bg-[#7ca9ff] p-6 text-center">
+                <div className="mt-8 grid min-h-55 sm:min-h-64 place-items-center rounded-2xl bg-[#7ca9ff] p-6 text-center">
                   <div>
                     <p className="mt-3 text-xl sm:text-2xl font-bold text-[#17211b]">
                       {event.venue ?? 'Virtual venue'}
