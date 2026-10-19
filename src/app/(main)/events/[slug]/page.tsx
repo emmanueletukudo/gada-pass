@@ -16,9 +16,7 @@ export default function EventPage({
   const [error, setError] = useState('');
   const [slug, setSlug] = useState('');
   const [checkoutOpen, setCheckoutOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'About' | 'Schedule' | 'Venue'>(
-    'About',
-  );
+  const [activeTab, setActiveTab] = useState<'About' | 'Venue'>('About');
 
   useEffect(() => {
     void params.then(({ slug: nextSlug }) => setSlug(nextSlug));
@@ -119,23 +117,26 @@ export default function EventPage({
               {event.category.name}
             </span>
             <div className="mt-6 md:mt-0">
-              <p className="mb-3 text-xs mt-2 font-bold uppercase tracking-[0.2em]">
+              {/* Hero Date Range Display */}
+              <div className="mb-3 mt-2 flex flex-wrap items-center gap-1.5 text-xs font-bold uppercase tracking-[0.2em]">
                 {foramtedStartDate === formatedEndDate ? (
-                  foramtedStartDate
+                  <span className="whitespace-nowrap">{foramtedStartDate}</span>
                 ) : (
-                  <>
-                    <span className="text-[10px] uppercase font-semibold text-white tracking-wider mr-1">
+                  <div className="flex flex-wrap items-center gap-1">
+                    <span className="text-[10px] uppercase font-semibold text-white tracking-wider">
                       From
                     </span>
-                    {foramtedStartDate}
-                    <span className="text-[10px] uppercase font-semibold text-white tracking-wider mx-1">
+                    <span className="whitespace-nowrap">
+                      {foramtedStartDate}
+                    </span>
+                    <span className="text-[10px] uppercase font-semibold text-white tracking-wider">
                       to
                     </span>
-                    {formatedEndDate}
-                  </>
+                    <span className="whitespace-nowrap">{formatedEndDate}</span>
+                  </div>
                 )}
+              </div>
 
-              </p>
               <h1 className="text-4xl sm:text-6xl md:text-8xl font-bold leading-[0.9] tracking-[-0.06em] wrap-break-word">
                 {event.name}
                 <span className="text-[#d6f94a]">.</span>
@@ -247,30 +248,35 @@ export default function EventPage({
                       When
                     </p>
 
-                    <div className="inline-flex items-center gap-2 text-xs font-bold text-[#17211b]">
-                      <span>
-                        {foramtedStartDate === formatedEndDate ? (
-                          foramtedStartDate
-                        ) : (
-                          <>
-                            <span className="text-[10px] uppercase font-semibold text-[#6d766d] tracking-wider mr-1">
-                              From
-                            </span>
+                    {/* WHEN Date Range Display with robust text wrapping */}
+                    <div className="mt-2 flex flex-wrap items-center gap-1 text-xs font-bold text-[#17211b]">
+                      {foramtedStartDate === formatedEndDate ? (
+                        <span className="whitespace-nowrap">
+                          {foramtedStartDate}
+                        </span>
+                      ) : (
+                        <div className="flex flex-wrap items-center gap-1">
+                          <span className="text-[9px] uppercase font-semibold text-[#6d766d] tracking-wider">
+                            From
+                          </span>
+                          <span className="whitespace-nowrap">
                             {foramtedStartDate}
-                            <span className="text-[10px] uppercase font-semibold text-[#6d766d] tracking-wider mx-1">
-                              to
-                            </span>
+                          </span>
+                          <span className="text-[9px] uppercase font-semibold text-[#6d766d] tracking-wider">
+                            to
+                          </span>
+                          <span className="whitespace-nowrap">
                             {formatedEndDate}
-                          </>
-                        )}
-                      </span>
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="rounded-xl border border-[#dce1d5] p-4 bg-white">
                     <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.15em] text-[#6d766d]">
                       Where
                     </p>
-                    <p className="mt-2 text-xs sm:text-sm font-bold text-[#17211b]">
+                    <p className="mt-2 text-xs sm:text-sm font-bold text-[#17211b] truncate">
                       {event.city ?? 'Online'}
                     </p>
                   </div>
