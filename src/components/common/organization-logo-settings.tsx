@@ -3,7 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import { Image as ImageIcon, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { api, mediaUrl } from '@/lib/api';
+import { mediaUrl } from '@/lib/api'; 
+import { useUploadFile } from '@/lib/hooks-new/useMedia';
+import { useUpdateLogoMutation } from '@/lib/hooks-new/useSettings';
 
 interface OrgLogoSettingsProps {
   currentLogoUrl?: string | null;
@@ -19,7 +21,9 @@ export function OrganizationLogoSettings({
   const [previewUrl, setPreviewUrl] = useState<string | null>(
     currentLogoUrl ? mediaUrl(currentLogoUrl) : null,
   );
-  const [isUploading, setIsUploading] = useState(false);
+
+  const uploadFileMutation = useUploadFile();
+  const updateLogoMutation = useUpdateLogoMutation();
 
   useEffect(() => {
     setPreviewUrl(currentLogoUrl ? mediaUrl(currentLogoUrl) : null);
@@ -43,64 +47,31 @@ export function OrganizationLogoSettings({
 
     const objectUrl = URL.createObjectURL(file);
     setPreviewUrl(objectUrl);
-    setIsUploading(true);
 
     try {
-      const { uploadUrl, publicUrl } = await api<{
-        uploadUrl: string;
-        fileKey: string;
-        publicUrl: string;
-      }>('/users/profile/logo-presign', {
-        method: 'POST',
-        body: JSON.stringify({ contentType: file.type }),
-      });
-
-      const uploadResponse = await fetch(uploadUrl, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': file.type,
-        },
-        body: file,
-      });
-
-      if (!uploadResponse.ok) {
-        throw new Error('Failed to upload image to storage.');
-      }
-      await api('/users/profile/logo', {
-        method: 'PATCH',
-        body: JSON.stringify({ logoUrl: publicUrl }),
-      });
+      const publicUrl = await uploadFileMutation.mutateAsync(file);
+      await updateLogoMutation.mutateAsync(publicUrl);
 
       setPreviewUrl(mediaUrl(publicUrl));
       toast.success('Host logo uploaded successfully!');
       onLogoChange?.(publicUrl);
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : 'Logo upload failed',
-      );
+    } catch {
       setPreviewUrl(currentLogoUrl ? mediaUrl(currentLogoUrl) : null);
-    } finally {
-      setIsUploading(false);
     }
   };
 
   const handleRemoveLogo = async () => {
     try {
-      setIsUploading(true);
-      await api('/users/profile/logo', {
-        method: 'PATCH',
-        body: JSON.stringify({ logoUrl: null }),
-      });
-
+      await updateLogoMutation.mutateAsync(null);
       setPreviewUrl(null);
       toast.success('Logo removed successfully.');
       onLogoChange?.(null);
-    } catch (error) {
-      toast.error('Failed to remove logo');
-    } finally {
-      setIsUploading(false);
+    } catch {
     }
   };
+
+  const isUploading =
+    uploadFileMutation.isPending || updateLogoMutation.isPending;
 
   return (
     <div className="flex flex-col items-center justify-center p-8 bg-transparent">

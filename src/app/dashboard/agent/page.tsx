@@ -939,7 +939,7 @@ export default function AgentScannerPage() {
                 ))}
               </div>
             ) : visibleGuests.length > 0 ? (
-              <ul className="max-h-80 space-y-2 overflow-y-auto pr-1 lg:max-h-[28rem]">
+              <ul className="max-h-80 space-y-2 overflow-y-auto pr-1 lg:max-h-112">
                 {visibleGuests.map((guest) => (
                   <li
                     key={guest.id}

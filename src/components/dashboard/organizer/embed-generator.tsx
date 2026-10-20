@@ -191,7 +191,7 @@ export default function EmbedGenerator({
             </span>
           </div>
 
-          <div className="rounded-2xl border border-dashed border-[#dce1d5] bg-[#f7f7f2] p-4 flex items-center justify-center overflow-x-auto min-h-[450px]">
+          <div className="rounded-2xl border border-dashed border-[#dce1d5] bg-[#f7f7f2] p-4 flex items-center justify-center overflow-x-auto min-h-112.5">
             <div
               style={{
                 width,
