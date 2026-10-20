@@ -103,7 +103,7 @@ export default function SideBar({ user, isLoading = false }: SideBarProps) {
       <div className="border-t border-[#dce1d5] pt-4">
         <div className="mb-4 px-4">
           <p className="truncate text-sm font-bold text-[#17211b]">
-            {user.hostName || 'User Account'}
+            {user.role === "GATE_AGENT" ? user.name : user.hostName}
           </p>
           <p className="truncate text-xs font-medium text-[#6d766d]">
             {user.email || ''}
@@ -111,6 +111,7 @@ export default function SideBar({ user, isLoading = false }: SideBarProps) {
         </div>
 
         <button
+          type="button"
           onClick={() => signOut({ callbackUrl: '/auth/login' })}
           className="flex w-full items-center gap-3 rounded-xl border border-[#dce1d5] bg-[#fffef9] px-4 py-3.5 text-left text-sm font-bold text-[#c34837] transition hover:border-[#c34837] hover:bg-[#c34837]/5"
         >

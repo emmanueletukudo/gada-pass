@@ -22,13 +22,13 @@ export default function MobileSideBar({
   const pathname = usePathname();
   const rawRole = user?.role?.toLowerCase() || 'attendee';
 
-
   const currentRoleSegment = rawRole === 'gate_agent' ? 'agent' : rawRole;
   const basePath = `/dashboard/${currentRoleSegment}`;
   const navItems =
     ROLE_NAV_ITEMS[currentRoleSegment] || ROLE_NAV_ITEMS.attendee;
   const workspaceTitle =
     rawRole === 'gate_agent' ? 'Gate Agent' : rawRole.replace('_', ' ');
+
   if (!isOpen) return null;
 
   return (
@@ -43,6 +43,7 @@ export default function MobileSideBar({
           <div className="flex items-center justify-between">
             <Logo />
             <button
+              type="button"
               onClick={() => setIsOpen(false)}
               className="rounded-full p-2 text-[#6d766d] hover:bg-[#f0f1e9]"
             >
@@ -93,6 +94,7 @@ export default function MobileSideBar({
           </div>
 
           <button
+            type="button"
             onClick={() => signOut({ callbackUrl: '/auth/login' })}
             className="flex w-full items-center gap-3 rounded-xl border border-[#dce1d5] bg-[#fffef9] px-4 py-3.5 text-left text-sm font-bold text-[#c34837] transition hover:border-[#c34837] hover:bg-[#c34837]/5"
           >

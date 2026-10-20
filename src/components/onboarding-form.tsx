@@ -5,13 +5,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { getDashboardPathForRole } from '@/lib/auth';
+import { getDashboardPathForRole, useCompleteOnboarding } from '@/lib/hooks-new/useAuth';
 import { toast } from 'sonner';
 import { useSession } from 'next-auth/react';
 import { UserRole } from '@/types/next-auth';
 import { ArrowLeft, Info, Loader2 } from 'lucide-react';
-import { api } from '@/lib/api';
-import { User } from 'next-auth';
 import { GadaInput } from '@/components/common/gada-inputs';
 
 const onboardingSchema = z.object({
@@ -29,10 +27,12 @@ export default function OnboardingForm() {
   const { data: session, status, update } = useSession();
   const [step, setStep] = useState<number>(1);
 
+  const completeOnboardingMutation = useCompleteOnboarding();
+
   const {
     register: field,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
     watch,
     setValue,
     trigger,
@@ -90,47 +90,36 @@ export default function OnboardingForm() {
   };
 
   const submit = async (values: OnboardingValues) => {
-    try {
-      const response = await api<{ accessToken: string; user: User }>(
-        '/auth/complete-onboarding',
-        {
-          method: 'POST',
-          body: JSON.stringify({
-            phone: values.phone,
-            hostName: values.hostName,
-            accountType: values.accountType,
-          }),
+    completeOnboardingMutation.mutate(
+      {
+        phone: values.phone,
+        hostName: values.hostName,
+        accountType: values.accountType,
+      },
+      {
+        onSuccess: async (response) => {
+          if (response?.user) {
+            await update({
+              ...session,
+              user: {
+                ...session?.user,
+                role: response.user.role,
+                hostName: response.user.hostName,
+                isNewUser: false,
+              },
+            });
+
+            const dashboardPath =
+              response.user.role === 'ORGANIZER'
+                ? '/dashboard/organizer'
+                : '/dashboard/attendee';
+
+            router.push(dashboardPath);
+            router.refresh();
+          }
         },
-      );
-
-      if (response?.accessToken) {
-        toast.success('Onboarding completed successfully!');
-
-        await update({
-          ...session,
-          user: {
-            ...session?.user,
-            role: response.user.role,
-            hostName: response.user.hostName,
-            isNewUser: false,
-          },
-        });
-
-        const dashboardPath =
-          response.user.role === 'ORGANIZER'
-            ? '/dashboard/organizer'
-            : '/dashboard/attendee';
-
-        router.push(dashboardPath);
-        router.refresh();
-      }
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : 'Unable to complete onboarding',
-      );
-    }
+      },
+    );
   };
 
   if (status === 'loading') {
@@ -284,10 +273,10 @@ export default function OnboardingForm() {
           </div>
 
           <button
-            disabled={isSubmitting}
+            disabled={completeOnboardingMutation.isPending}
             className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#17211b] py-4 font-bold text-white disabled:opacity-50 transition hover:bg-[#25332b]"
           >
-            {isSubmitting ? (
+            {completeOnboardingMutation.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin text-[#d6f94a]" />
             ) : (
               <span>Complete Onboarding</span>

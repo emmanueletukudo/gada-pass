@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -19,6 +19,8 @@ import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
 import { GadaInput } from './common/gada-inputs';
 import { toast } from 'sonner';
 
+import { useCheckoutStore, Tier } from '@/stores/use-checkout-store';
+
 const guestCheckoutSchema = z.object({
   fullName: z.string().min(2, 'Full name must be at least 2 characters'),
   email: z.string().email('Please enter a valid email address'),
@@ -30,25 +32,10 @@ const guestCheckoutSchema = z.object({
 
 export type GuestCheckoutFormData = z.infer<typeof guestCheckoutSchema>;
 
-export type Tier = {
-  id: string;
-  name: string;
-  description?: string;
-  price: string;
-  currency: string;
-  quantity: number;
-  soldCount: number;
-  isMultiDay?: boolean;
-  maxScansPerDay?: number;
-  validDate?: string;
-};
-
 interface TicketCheckoutProps {
   eventId: string;
   tiers?: Tier[];
 }
-
-type Selection = { tier: Tier; quantity: number };
 
 function OrderSummary({
   selections,
@@ -56,7 +43,7 @@ function OrderSummary({
   platformFee,
   total,
 }: {
-  selections: Selection[];
+  selections: { tier: Tier; quantity: number }[];
   currencySymbol: string;
   platformFee: number;
   total: number;
@@ -100,49 +87,36 @@ export function TicketCheckout({ eventId, tiers = [] }: TicketCheckoutProps) {
   const router = useRouter();
   const { user, isAuthenticated, isLoading } = useCurrentUser();
 
-  const [quantities, setQuantities] = useState<Record<string, number>>({});
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isDrawerVisible, setIsDrawerVisible] = useState(false);
+  const {
+    quantities,
+    setQuantity,
+    resetQuantities,
+    isDrawerOpen,
+    isDrawerVisible,
+    isProcessing,
+    openDrawer,
+    closeDrawer,
+    setIsProcessing,
+    initCheckout,
+    getActiveSelections,
+    getSubtotal,
+    getPlatformFee,
+    getTotal,
+    getCurrencySymbol,
+  } = useCheckoutStore();
 
-  const openDrawer = () => {
-    setIsDrawerOpen(true);
-    setTimeout(() => setIsDrawerVisible(true), 10);
-  };
+  useEffect(() => {
+    if (eventId && tiers.length > 0) {
+      initCheckout(eventId, tiers);
+    }
+  }, [eventId, tiers, initCheckout]);
 
-  const closeDrawer = () => {
-    setIsDrawerVisible(false);
-    setTimeout(() => setIsDrawerOpen(false), 300);
-  };
+  const activeSelections = getActiveSelections();
+  const subtotal = getSubtotal();
+  const platformFee = getPlatformFee();
+  const total = getTotal();
+  const currencySymbol = getCurrencySymbol();
 
-  const handleQuantityChange = (
-    tierId: string,
-    delta: number,
-    maxAvailable: number,
-  ) => {
-    setQuantities((prev) => {
-      const current = prev[tierId] || 0;
-      const updated = Math.max(0, Math.min(maxAvailable, current + delta));
-      return { ...prev, [tierId]: updated };
-    });
-  };
-
-  const activeSelections: Selection[] = (tiers ?? [])
-    .map((tier) => ({
-      tier,
-      quantity: quantities[tier.id] || 0,
-    }))
-    .filter((item) => item.quantity > 0);
-
-  const subtotal = activeSelections.reduce((acc, item) => {
-    return acc + Number(item.tier.price) * item.quantity;
-  }, 0);
-
-  const currencySymbol =
-    tiers[0]?.currency === 'NGN' ? '₦' : tiers[0]?.currency || '₦';
-
-  const platformFee = subtotal > 0 ? subtotal * 0.05 + 100 : 0;
-  const total = subtotal + platformFee;
   const hasSelection = activeSelections.length > 0;
   const isFree = hasSelection && total === 0;
 
@@ -204,14 +178,13 @@ export function TicketCheckout({ eventId, tiers = [] }: TicketCheckoutProps) {
         });
 
         toast.success('Tickets reserved successfully! Check your email.');
-        setIsDrawerVisible(false);
-        setIsDrawerOpen(false);
+        closeDrawer();
 
         if (isAuthenticated) {
-          router.push('/dashboad/attendee/tickets');
+          router.push('/dashboard/attendee/tickets');
         } else {
           reset();
-          setQuantities({});
+          resetQuantities();
 
           setTimeout(() => {
             window.location.reload();
@@ -275,8 +248,6 @@ export function TicketCheckout({ eventId, tiers = [] }: TicketCheckoutProps) {
                   : 'border-[#e6e8e3] bg-[#ffffff]'
               }`}
             >
-              {/* Top: icon + details. Always stacked from the price row so the
-                  narrow sidebar never squeezes the text column. */}
               <div className="flex items-start gap-3.5">
                 <div
                   className={`grid h-12 w-12 shrink-0 place-items-center rounded-2xl sm:h-14 sm:w-14 ${
@@ -331,7 +302,6 @@ export function TicketCheckout({ eventId, tiers = [] }: TicketCheckoutProps) {
                 </div>
               </div>
 
-              {/* Bottom: price + stepper */}
               <div className="flex items-center justify-between gap-4 border-t border-dashed border-[#e6e8e3] pt-4">
                 <div>
                   <span className="block text-[10px] font-bold uppercase tracking-wider text-[#9f9fa8]">
@@ -349,7 +319,7 @@ export function TicketCheckout({ eventId, tiers = [] }: TicketCheckoutProps) {
                     type="button"
                     aria-label={`Remove one ${tier.name} ticket`}
                     disabled={isProcessing || currentQty <= 0}
-                    onClick={() => handleQuantityChange(tier.id, -1, available)}
+                    onClick={() => setQuantity(tier.id, -1, available)}
                     className="grid h-8 w-8 place-items-center rounded-full bg-[#f1f3ed] text-[#8e8d96] transition hover:bg-[#e4e7df] disabled:opacity-30"
                   >
                     <Minus className="h-3.5 w-3.5" />
@@ -368,7 +338,7 @@ export function TicketCheckout({ eventId, tiers = [] }: TicketCheckoutProps) {
                     disabled={
                       isProcessing || isSoldOut || currentQty >= available
                     }
-                    onClick={() => handleQuantityChange(tier.id, 1, available)}
+                    onClick={() => setQuantity(tier.id, 1, available)}
                     className={`grid h-8 w-8 place-items-center rounded-full ${
                       isVip
                         ? 'bg-[#ff765f] hover:bg-[#d2614d]'
@@ -525,7 +495,6 @@ export function TicketCheckout({ eventId, tiers = [] }: TicketCheckoutProps) {
               </form>
             </div>
 
-            {/* Sticky footer so the CTA is always reachable on short screens */}
             <div className="sticky bottom-0 -mx-5 mt-6 border-t border-[#dce1d5] bg-[#fffef9] px-5 pb-1 pt-4 sm:-mx-6 sm:px-6">
               <button
                 type="submit"

@@ -5,14 +5,20 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { getDashboardPathForRole, register } from '@/lib/auth';
+import {
+  getDashboardPathForRole,
+  useRegister,
+  useSendOtp,
+  useVerifyOtp,
+} from '@/lib/hooks-new/useAuth';
+
+
 import { GadaInput } from './common/gada-inputs';
 import { toast } from 'sonner';
 import { useSession, signIn, getSession } from 'next-auth/react';
 import { UserRole } from '@/types/next-auth';
 import { ArrowLeft, Info, Loader2 } from 'lucide-react';
 import { OtpInput } from './common/otp-input';
-import { api } from '@/lib/api';
 
 const getSchema = (mode: 'login' | 'register', step: number) => {
   return z
@@ -63,9 +69,11 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
   const router = useRouter();
   const { data: session, status } = useSession();
   const [step, setStep] = useState<number>(1);
-  const [isVerifyingOtp, setIsVerifyingOtp] = useState<boolean>(false);
-  const [isSendingCode, setIsSendingCode] = useState<boolean>(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState<boolean>(false);
+
+  const sendOtpMutation = useSendOtp();
+  const verifyOtpMutation = useVerifyOtp();
+  const registerMutation = useRegister();
 
   const {
     register: field,
@@ -111,39 +119,23 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
   }, [status, session, router]);
 
   const handleOtpComplete = async (otpValue: string) => {
-    setIsVerifyingOtp(true);
-    try {
-      await api('/auth/verify-otp', {
-        method: 'POST',
-        body: JSON.stringify({
-          email: watch('email'),
-          otp: otpValue,
-        }),
-      });
-
-      toast.success('Email verified successfully!');
-      setStep(3);
-    } catch (err: any) {
-      toast.error(err.message || 'Invalid or expired code');
-      setError('otp', { message: 'Invalid or expired code' });
-    } finally {
-      setIsVerifyingOtp(false);
-    }
+    verifyOtpMutation.mutate(
+      { email: watch('email'), otp: otpValue },
+      {
+        onSuccess: () => {
+          setStep(3);
+        },
+        onError: (err) => {
+          const errorMessage =
+            err instanceof Error ? err.message : 'Invalid or expired code';
+          setError('otp', { message: errorMessage });
+        },
+      },
+    );
   };
 
-  const handleResendOtp = async () => {
-    try {
-      await api('/auth/send-otp', {
-        method: 'POST',
-        body: JSON.stringify({
-          email: watch('email'),
-        }),
-      });
-
-      toast.success('A new verification code has been sent!');
-    } catch (err: any) {
-      toast.error(err.message || 'Failed to resend code');
-    }
+  const handleResendOtp = () => {
+    sendOtpMutation.mutate({ email: watch('email') });
   };
 
   const handleNextStep = async () => {
@@ -156,20 +148,14 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
         return;
       }
 
-      setIsSendingCode(true);
-      try {
-        await api('/auth/send-otp', {
-          method: 'POST',
-          body: JSON.stringify({ email: emailValue }),
-        });
-
-        toast.success('Verification code sent to your email.');
-        setStep(2);
-      } catch (err: any) {
-        toast.error(err.message || 'Failed to send verification code.');
-      } finally {
-        setIsSendingCode(false);
-      }
+      sendOtpMutation.mutate(
+        { email: emailValue },
+        {
+          onSuccess: () => {
+            setStep(2);
+          },
+        },
+      );
     } else if (step === 2) {
       const otpValue = watch('otp') || '';
       if (otpValue.length < 6) {
@@ -222,35 +208,41 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
           return;
         }
 
-        await register({
-          firstName: values.firstName!,
-          lastName: values.lastName!,
-          email: values.email,
-          phone: values.phone!,
-          password: values.password!,
-          hostName: values.hostName!,
-          accountType: values.accountType ?? 'INDIVIDUAL',
-          role:
-            values.accountType === 'ORGANIZATION' ? 'ORGANIZER' : 'ATTENDEE',
-        });
-
-        toast.success('Account created successfully!');
-        router.push('/auth/login');
-        router.refresh();
+        registerMutation.mutate(
+          {
+            firstName: values.firstName!,
+            lastName: values.lastName!,
+            email: values.email,
+            phone: values.phone!,
+            password: values.password!,
+            hostName: values.hostName!,
+            accountType: values.accountType ?? 'INDIVIDUAL',
+            role:
+              values.accountType === 'ORGANIZATION' ? 'ORGANIZER' : 'ATTENDEE',
+          },
+          {
+            onSuccess: () => {
+              router.push('/auth/login');
+              router.refresh();
+            },
+            onError: (error) => {
+              const message =
+                error instanceof Error ? error.message : 'Unable to continue';
+              setError('root', { message });
+            },
+          },
+        );
       }
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : 'Unable to continue',
-      );
-      setError('root', {
-        message: error instanceof Error ? error.message : 'Unable to continue',
-      });
+      const message =
+        error instanceof Error ? error.message : 'Unable to continue';
+      toast.error(message);
+      setError('root', { message });
     }
   };
 
   const handleGoogleSignIn = async () => {
     setIsGoogleLoading(true);
-    // Route Google users directly to the dedicated onboarding page
     await signIn('google', { callbackUrl: '/auth/onboarding' });
   };
 
@@ -266,6 +258,11 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
       </div>
     );
   }
+
+  const isMutationPending =
+    sendOtpMutation.isPending ||
+    verifyOtpMutation.isPending ||
+    registerMutation.isPending;
 
   return (
     <form onSubmit={handleSubmit(submit)} className="space-y-4">
@@ -284,11 +281,11 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
               />
               <button
                 type="button"
-                disabled={isSendingCode || !watch('email')}
+                disabled={sendOtpMutation.isPending || !watch('email')}
                 onClick={handleNextStep}
                 className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#17211b] py-4 font-bold text-white transition hover:bg-[#25332b] disabled:opacity-50"
               >
-                {isSendingCode ? (
+                {sendOtpMutation.isPending ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin text-[#d6f94a]" />
                     <span>Sending Code...</span>
@@ -340,7 +337,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
               <div className="flex items-center justify-between">
                 <button
                   type="button"
-                  disabled={isVerifyingOtp}
+                  disabled={verifyOtpMutation.isPending}
                   onClick={() => setStep(1)}
                   className="inline-flex items-center gap-1 text-xs font-bold text-[#6d766d] hover:text-[#17211b] disabled:opacity-50"
                 >
@@ -366,7 +363,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
               <OtpInput
                 length={6}
                 value={watch('otp') || ''}
-                isVerifying={isVerifyingOtp}
+                isVerifying={verifyOtpMutation.isPending}
                 onChange={(otpVal) =>
                   setValue('otp', otpVal, { shouldValidate: true })
                 }
@@ -377,11 +374,13 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
 
               <button
                 type="button"
-                disabled={isVerifyingOtp || (watch('otp') || '').length < 6}
+                disabled={
+                  verifyOtpMutation.isPending || (watch('otp') || '').length < 6
+                }
                 onClick={() => handleOtpComplete(watch('otp') || '')}
                 className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#17211b] py-4 font-bold text-white transition hover:bg-[#25332b] disabled:opacity-50"
               >
-                {isVerifyingOtp ? (
+                {verifyOtpMutation.isPending ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin text-[#d6f94a]" />
                     <span>Verifying Code...</span>
@@ -531,10 +530,10 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
               />
 
               <button
-                disabled={isSubmitting}
+                disabled={isSubmitting || isMutationPending}
                 className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#17211b] py-4 font-bold text-white disabled:opacity-50 transition hover:bg-[#25332b]"
               >
-                {isSubmitting ? (
+                {isSubmitting || registerMutation.isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin text-[#d6f94a]" />
                 ) : (
                   <span>Register</span>

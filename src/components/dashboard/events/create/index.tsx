@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,7 +15,9 @@ import { Step3Tickets } from './Step3Tickets';
 import { StepIndicator } from './StepIndicator';
 import { EventFormDataPreview } from '../preview/types';
 import { EventPreviewStep } from '../preview';
-import { createEvent, publishEvent } from '@/lib/event';
+
+import { useEventFormStore } from '@/stores/use-event-form-store';
+import { useCreateEvent, usePublishEvent } from '@/lib/hooks-new/useEvents';
 import { EVENT_TYPES } from './types';
 
 const STEP_LABELS = [
@@ -28,9 +30,13 @@ const STEP_LABELS = [
 ];
 
 export default function CreateEventMultiStepPage() {
-  const [step, setStep] = useState(1);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
+  const { step, setStep, nextStep, prevStep, resetForm } = useEventFormStore();
+  const createEventMutation = useCreateEvent();
+  const publishEventMutation = usePublishEvent();
+
+  const isSubmitting =
+    createEventMutation.isPending || publishEventMutation.isPending;
 
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
@@ -78,21 +84,17 @@ export default function CreateEventMultiStepPage() {
     const isStepValid = await trigger(fieldsToValidate);
 
     if (isStepValid || step === 1) {
-      setStep((prev) => prev + 1);
+      nextStep();
     } else {
       toast.error('Please fix highlighted errors before continuing.');
     }
   };
 
-  const handlePrev = () => {
-    setStep((prev) => Math.max(prev - 1, 1));
-  };
-
   const onFinalSubmit = async (values: EventFormValues) => {
-    setIsSubmitting(true);
     try {
       const imageFiles: File[] = values.coverImageFiles ?? [];
-      const createdEvent = await createEvent({
+
+      const createdEvent = await createEventMutation.mutateAsync({
         name: values.title,
         description: values.description,
         categoryId: values.categoryId as string,
@@ -119,14 +121,14 @@ export default function CreateEventMultiStepPage() {
         eventType: values.eventType,
       });
 
-      await publishEvent(createdEvent.id);
-      toast.success('Your experience is now live on Gada Pass!');
-      router.push('/dashboard/organizer/events');
+      if (createdEvent?.id) {
+        await publishEventMutation.mutateAsync(createdEvent.id);
+        toast.success('Your experience is now live on Gada Pass!');
+        resetForm();
+        router.push('/dashboard/organizer/events');
+      }
     } catch (err) {
-      console.error('Failed to create event:', err);
-      toast.error('Failed to create event. Please check your inputs.');
-    } finally {
-      setIsSubmitting(false);
+      console.error('Failed to create and publish event:', err);
     }
   };
 
@@ -234,7 +236,7 @@ export default function CreateEventMultiStepPage() {
         {step === 6 && (
           <EventPreviewStep
             formData={previewDataAdapter}
-            onBack={handlePrev}
+            onBack={prevStep}
             onPublish={handleSubmit(onFinalSubmit)}
             onSaveDraft={() => toast.info('Draft saved locally.')}
             isSubmitting={isSubmitting}
@@ -246,7 +248,7 @@ export default function CreateEventMultiStepPage() {
             {step > 1 ? (
               <button
                 type="button"
-                onClick={handlePrev}
+                onClick={prevStep}
                 className="inline-flex items-center gap-2 rounded-full border border-[#dce1d5] bg-[#fffef9] px-5 py-3 text-xs font-bold text-[#17211b] transition hover:border-[#17211b]"
               >
                 <ArrowLeft className="h-4 w-4" />

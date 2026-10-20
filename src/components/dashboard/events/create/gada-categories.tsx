@@ -1,8 +1,7 @@
 import { GadaSelect } from '@/components/common/gada-inputs';
-import { EventCategory, getEventCategories } from '@/lib/event';
-import { useEffect, useState } from 'react';
 import { Controller, UseFormReturn } from 'react-hook-form';
 import { EventFormValues } from './schema';
+import { useEventCategories } from '@/lib/hooks-new/useEvents';
 
 type GadaCategoriesProps = {
   form: UseFormReturn<EventFormValues>;
@@ -14,33 +13,7 @@ export const GadaCategories = ({ form }: GadaCategoriesProps) => {
     formState: { errors },
   } = form;
 
-  const [categories, setCategories] = useState<EventCategory[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const fetchCategories = async () => {
-      try {
-        const res = await getEventCategories();
-        if (isMounted) {
-          setCategories(res);
-        }
-      } catch (error) {
-        console.error('Failed to fetch categories:', error);
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    fetchCategories();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
+  const { data: categories = [], isLoading } = useEventCategories();
 
   return (
     <Controller
