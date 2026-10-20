@@ -1,32 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { api } from '@/lib/api';
 import { MetricCard } from '@/components/dashboard/mertics-card';
 import { EventGraph } from '@/components/dashboard/event-graph';
 import { QuickActions } from '@/components/dashboard/quick-action';
-import { toast } from 'sonner';
-
-interface AdminGlobalStats {
-  volumeThisMonth: number;
-  eventsPublishedCount: number;
-  upcomingFeaturedEventName: string;
-}
+import { useAdminMetrics } from '@/lib/hooks-new/useAdminMetrics';
 
 export default function AdminDashboardPage() {
-  const [stats, setStats] = useState<AdminGlobalStats | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    api<AdminGlobalStats>('/admin/metrics/summary')
-      .then(setStats)
-      .catch(() => {
-        console.warn(
-          'Admin remote endpoints unmapped. Defaulting to local data layers.',
-        );
-      })
-      .finally(() => setIsLoading(false));
-  }, []);
+  const { data: stats, isLoading } = useAdminMetrics();
 
   const monthlyVolume = stats
     ? `₦${stats.volumeThisMonth.toLocaleString()}`
@@ -50,13 +30,13 @@ export default function AdminDashboardPage() {
       <div className="grid gap-4 md:grid-cols-3">
         <MetricCard
           accent="#d6f94a"
-          metric={isLoading && stats ? 'Checking...' : monthlyVolume}
+          metric={isLoading ? 'Loading...' : monthlyVolume}
           metricLabel="volume this month"
           title="Live now"
         />
 
         <MetricCard
-          metric={itemsPublished}
+          metric={isLoading ? '...' : itemsPublished}
           metricLabel="events published"
           title="This week"
         />

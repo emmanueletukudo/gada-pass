@@ -1,15 +1,15 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Logo } from '@/components/logo';
 import { GadaInput } from '@/components/common/gada-inputs';
-import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { UserCheck, AlertCircle, Loader2 } from 'lucide-react';
+import { useInviteInfo, useAcceptInvite } from '@/lib/hooks-new/useAgentInvite';
 
 const acceptInviteSchema = z
   .object({
@@ -38,21 +38,18 @@ const acceptInviteSchema = z
 
 type AcceptInviteFormData = z.infer<typeof acceptInviteSchema>;
 
-type InviteInfo = {
-  email: string;
-  eventName: string;
-  isExistingUser: boolean;
-};
-
 function AcceptInviteContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
 
-  const [isLoadingInfo, setIsLoadingInfo] = useState(true);
-  const [inviteInfo, setInviteInfo] = useState<InviteInfo | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [tokenError, setTokenError] = useState<string | null>(null);
+  const {
+    data: inviteInfo,
+    isPending: isLoadingInfo,
+    error: queryError,
+  } = useInviteInfo(token);
+
+  const { mutate: acceptInvite, isPending: isSubmitting } = useAcceptInvite();
 
   const {
     register,
@@ -66,62 +63,41 @@ function AcceptInviteContent() {
     },
   });
 
-  useEffect(() => {
-    if (!token || token.trim().length === 0) {
-      setTokenError('Missing or invalid invitation token.');
-      setIsLoadingInfo(false);
-      return;
-    }
-
-    api<InviteInfo>(`/agents/invite-info?token=${token}`)
-      .then((info) => {
-        setInviteInfo(info);
-      })
-      .catch((err) => {
-        const message =
-          err instanceof Error
-            ? err.message
-            : 'Invalid or expired invitation token.';
-        setTokenError(message);
-      })
-      .finally(() => {
-        setIsLoadingInfo(false);
-      });
-  }, [token]);
-
-  const handleAccept = async (data: AcceptInviteFormData) => {
+  const handleAccept = (data: AcceptInviteFormData) => {
     if (!token) {
       toast.error('Invitation token is missing.');
       return;
     }
 
-    setIsSubmitting(true);
-
-    try {
-      const res = await api<{
-        message: string;
-        eventId: string;
-        userId: string;
-      }>('/agents/accept', {
-        method: 'POST',
-        body: JSON.stringify({
-          token,
-          ...(data.password ? { password: data.password } : {}),
-        }),
-      });
-
-      toast.success(res.message || 'Invitation accepted successfully!');
-      router.push('/dashboard/agent');
-    } catch (err) {
-      const message =
-        err instanceof Error
-          ? err.message
-          : 'Failed to accept invitation. Please try again.';
-      toast.error(message);
-    } finally {
-      setIsSubmitting(false);
-    }
+    acceptInvite(
+      {
+        token,
+        ...(data.password ? { password: data.password } : {}),
+      },
+      {
+        onSuccess: (res) => {
+          toast.success(res.message || 'Invitation accepted successfully!');
+          router.push('/dashboard/agent');
+        },
+        onError: (err) => {
+          const message =
+            err instanceof Error
+              ? err.message
+              : 'Failed to accept invitation. Please try again.';
+          toast.error(message);
+        },
+      },
+    );
   };
+
+  const tokenError =
+    !token || token.trim().length === 0
+      ? 'Missing or invalid invitation token.'
+      : queryError instanceof Error
+        ? queryError.message
+        : queryError
+          ? 'Invalid or expired invitation token.'
+          : null;
 
   if (isLoadingInfo) {
     return (

@@ -1,25 +1,10 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { api } from '@/lib/api';
+import { useMemo } from 'react';
 import { MetricCard } from '@/components/dashboard/mertics-card';
 import { EventGraph } from '@/components/dashboard/event-graph';
 import { QuickActions } from '@/components/dashboard/quick-action';
-import { toast } from 'sonner';
-
-interface Ticket {
-  id: string;
-  qrPayload?: string;
-  status?: 'ACTIVE' | 'USED' | 'EXPIRED' | 'CANCELLED';
-  createdAt?: string;
-  event?: {
-    id?: string;
-    name?: string;
-    startDate?: string;
-    endDate?: string;
-    location?: string;
-  };
-}
+import { useAttendeeTickets, Ticket } from '@/lib/hooks-new/useAttendeeTickets';
 
 function AttendeeDashboardSkeleton() {
   return (
@@ -38,29 +23,15 @@ function AttendeeDashboardSkeleton() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-        <div className="h-[350px] rounded-3xl border border-[#dce1d5] bg-[#fffef9] p-6 shadow-sm" />
-        <div className="h-[350px] rounded-3xl border border-[#dce1d5] bg-[#fffef9] p-6 shadow-sm" />
+        <div className="h-87.5 rounded-3xl border border-[#dce1d5] bg-[#fffef9] p-6 shadow-sm" />
+        <div className="h-87.5 rounded-3xl border border-[#dce1d5] bg-[#fffef9] p-6 shadow-sm" />
       </div>
     </div>
   );
 }
 
 export default function AttendeeDashboardPage() {
-  const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    api<Ticket[]>('/tickets/my-tickets')
-      .then((data) => setTickets(Array.isArray(data) ? data : []))
-      .catch((error: unknown) => {
-        const message =
-          error instanceof Error
-            ? error.message
-            : 'Could not load your tickets';
-        toast.error(message);
-      })
-      .finally(() => setIsLoading(false));
-  }, []);
+  const { data: tickets = [], isLoading, error } = useAttendeeTickets();
 
   const metrics = useMemo(() => {
     const activeTickets = tickets.filter(
@@ -103,7 +74,6 @@ export default function AttendeeDashboardPage() {
       'Nov',
       'Dec',
     ];
-    const currentYear = new Date().getFullYear();
     const monthlyCounts: Record<string, number> = {};
 
     for (let i = 5; i >= 0; i--) {
@@ -131,6 +101,14 @@ export default function AttendeeDashboardPage() {
 
   if (isLoading) {
     return <AttendeeDashboardSkeleton />;
+  }
+
+  if (error) {
+    return (
+      <div className="my-10 rounded-2xl border border-[#ffb3a7] bg-[#fff0ed] p-6 text-center text-sm font-bold text-[#a13c2d]">
+        {error instanceof Error ? error.message : 'Could not load your tickets'}
+      </div>
+    );
   }
 
   return (

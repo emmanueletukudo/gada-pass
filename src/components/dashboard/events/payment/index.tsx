@@ -3,32 +3,37 @@
 import { useEffect, useState } from 'react';
 import { UseFormReturn } from 'react-hook-form';
 import { Sparkles, ShieldCheck } from 'lucide-react';
-import {
-  getSetlementAccounts,
-  getSupportedBanks,
-  SetlementAccount,
-  supportedBanksResponse,
-} from '@/lib/event';
 import { AccountSelectList } from './AccountSelectList';
 import { AccountPreviewCard } from './AccountPreviewCard';
 import { AddAccountModal } from './AddAccountModal';
 
+import {
+  useSettlementAccounts,
+  useSupportedBanks,
+  SetlementAccount,
+} from '@/lib/hooks-new/useEvents';
+import { useEventFormStore } from '@/stores/use-event-form-store';
+
 interface PaymentSettingsStepProps {
   form: UseFormReturn<any>;
   mode?: 'event-creation' | 'settings';
+  onSuccess?: (account: SetlementAccount) => void;
 }
 
 export function PaymentSettingsStep({
   form,
   mode = 'event-creation',
+  onSuccess,
 }: PaymentSettingsStepProps) {
   const { setValue, watch } = form;
 
-  const [accounts, setAccounts] = useState<SetlementAccount[]>([]);
-  const [supportedBanks, setSupportedBanks] = useState<
-    supportedBanksResponse[]
-  >([]);
-  const [isLoadingBanks, setIsLoadingBanks] = useState(false);
+  const updateFormData = useEventFormStore((state) => state.updateFormData);
+
+  const { data: accounts = [], isLoading: isLoadingAccounts } =
+    useSettlementAccounts();
+  const { data: supportedBanks = [], isLoading: isLoadingBanks } =
+    useSupportedBanks();
+
   const [isChanging, setIsChanging] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
 
@@ -43,39 +48,6 @@ export function PaymentSettingsStep({
     accounts.find((a) => a.id === selectedAccountId) || defaultAcc;
 
   useEffect(() => {
-    let isMounted = true;
-    getSetlementAccounts()
-      .then((res) => {
-        if (isMounted && res) setAccounts(res);
-      })
-      .catch((err) =>
-        console.error('Failed to fetch settlement accounts', err),
-      );
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    let isMounted = true;
-    setIsLoadingBanks(true);
-    getSupportedBanks()
-      .then((res) => {
-        if (isMounted && res) setSupportedBanks(res);
-      })
-      .catch((err) => console.error('Failed to fetch banks', err))
-      .finally(() => {
-        if (isMounted) setIsLoadingBanks(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-
-  useEffect(() => {
     if (selectedAccount && !isFreeEvent) {
       setValue('settlementAccountId', selectedAccount.id, {
         shouldValidate: true,
@@ -85,8 +57,11 @@ export function PaymentSettingsStep({
         shouldValidate: true,
         shouldDirty: true,
       });
+      if (mode === 'event-creation') {
+        updateFormData({ settlementAccountId: selectedAccount.id });
+      }
     }
-  }, [selectedAccount, isFreeEvent, setValue]);
+  }, [selectedAccount, isFreeEvent, setValue, updateFormData, mode]);
 
   const handleSelectAccount = (id: string) => {
     const matchedAccount = accounts.find((a) => a.id === id);
@@ -99,13 +74,21 @@ export function PaymentSettingsStep({
         shouldValidate: true,
         shouldDirty: true,
       });
+      if (mode === 'event-creation') {
+        updateFormData({ settlementAccountId: matchedAccount.id });
+      }
     }
     setIsChanging(false);
   };
 
   const handleAccountCreated = (newAccount: SetlementAccount) => {
-    setAccounts((prev) => [...prev, newAccount]);
-    handleSelectAccount(newAccount.id as string);
+    if (newAccount.id) {
+      handleSelectAccount(newAccount.id);
+    }
+    setShowAddModal(false);
+    if (onSuccess) {
+      onSuccess(newAccount);
+    }
   };
 
   return (
@@ -155,34 +138,33 @@ export function PaymentSettingsStep({
         </>
       )}
 
-
-{ mode === "event-creation" && (
-      <div className="flex items-center justify-between rounded-2xl border border-[#dce1d5] bg-[#fffef9] p-4 sm:p-5">
-        <div className="space-y-0.5">
-          <div className="flex items-center gap-2">
-            <ShieldCheck className="h-10 w-10 text-[#ff5500]" />
-            <div>
-              <h4 className="text-xs font-bold uppercase tracking-wider text-[#17211b]">
-                Fee Absorbing Mode
-              </h4>
-              <p className="text-xs text-[#6d766d]">
-                {coverFees
-                  ? 'Organizer absorbs platform commission fees on behalf of buyers.'
-                  : 'Ticket buyers will pay platform commission fees during checkout.'}
-              </p>
+      {mode === 'event-creation' && (
+        <div className="flex items-center justify-between rounded-2xl border border-[#dce1d5] bg-[#fffef9] p-4 sm:p-5">
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-2">
+              <ShieldCheck className="h-10 w-10 text-[#ff5500]" />
+              <div>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-[#17211b]">
+                  Fee Absorbing Mode
+                </h4>
+                <p className="text-xs text-[#6d766d]">
+                  {coverFees
+                    ? 'Organizer absorbs platform commission fees on behalf of buyers.'
+                    : 'Ticket buyers will pay platform commission fees during checkout.'}
+                </p>
+              </div>
             </div>
           </div>
+          <span
+            className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase ${
+              coverFees
+                ? 'bg-[#17211b] text-white'
+                : 'border border-[#dce1d5] bg-[#f7f7f2] text-[#17211b]'
+            }`}
+          >
+            {coverFees ? 'Organizer Pays' : 'Buyer Pays'}
+          </span>
         </div>
-        <span
-          className={`rounded-full px-3 py-1 text-[11px] font-bold uppercase ${
-            coverFees
-              ? 'bg-[#17211b] text-white'
-              : 'bg-[#f7f7f2] border border-[#dce1d5] text-[#17211b]'
-          }`}
-        >
-          {coverFees ? 'Organizer Pays' : 'Buyer Pays'}
-        </span>
-      </div>
       )}
 
       <AddAccountModal

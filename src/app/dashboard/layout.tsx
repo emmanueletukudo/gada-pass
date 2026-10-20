@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import SideBar, { User } from '@/components/dashboard/sidebar';
 import MobileSideBar from '@/components/dashboard/mobile-sidebar';
@@ -8,11 +8,8 @@ import { Header } from '@/components/dashboard/header';
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
 import { SettlementNotification } from '@/components/dashboard/settlement-notification';
 import { DashboardSkeleton } from '@/components/dashboard/common/dashboard-skeleton';
-import { api } from '@/lib/api';
-import { toast } from 'sonner';
-import { getSetlementAccounts, SetlementAccount } from '@/lib/event';
-
-
+import { useSettlementAccounts } from '@/lib/hooks-new/useSettlementAccounts';
+import { useSettlementStore } from '@/stores/use-settlement-store';
 
 export default function RootDashboardLayout({
   children,
@@ -20,45 +17,14 @@ export default function RootDashboardLayout({
   children: React.ReactNode;
 }) {
   const { user, isLoading: isUserLoading } = useCurrentUser();
-  const [accounts, setAccounts] = useState<SetlementAccount[]>([]);
-  const [isAccountsLoading, setIsAccountsLoading] = useState(true);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const pathname = usePathname();
 
   const isOrganizer = user?.role?.toUpperCase() === 'ORGANIZER';
 
-  useEffect(() => {
-    let isMounted = true;
-
-    const fetchAccounts = async () => {
-      if (!isOrganizer) {
-        setIsAccountsLoading(false);
-        return;
-      }
-
-      try {
-        const res = await getSetlementAccounts();
-        if (isMounted && res) {
-          setAccounts(res);
-        }
-      } catch (error) {
-        console.error('Could not fetch settlement accounts', error);
-      } finally {
-        if (isMounted) {
-          setIsAccountsLoading(false);
-        }
-      }
-    };
-
-    if (user) {
-      fetchAccounts();
-    }
-
-    return () => {
-      isMounted = false;
-    };
-  }, [user, isOrganizer]);
-
+  const { data: accounts = [], isLoading: isAccountsLoading } =
+    useSettlementAccounts();
+  const isDismissed = useSettlementStore((s) => s.isDismissed);
 
   if (isUserLoading || (isOrganizer && isAccountsLoading)) {
     return (
@@ -76,7 +42,8 @@ export default function RootDashboardLayout({
     !rawTitle || rawTitle === user?.role?.toLowerCase()
       ? 'Overview'
       : rawTitle.replace('-', ' ');
-  const needsWalletSetup = isOrganizer && accounts.length === 0;
+
+  const needsWalletSetup = isOrganizer && accounts.length === 0 && !isDismissed;
 
   return (
     <div className="min-h-screen bg-[#f7f7f2] text-[#17211b]">

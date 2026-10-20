@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { api } from '@/lib/api';
+import { useState, useRef } from 'react';
 import {
   Calendar,
   MapPin,
@@ -14,17 +13,10 @@ import { toast } from 'sonner';
 import { QRCodeSVG } from 'qrcode.react';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-
-interface AttendeeTicket {
-  id: string;
-  eventTitle: string;
-  eventDate: string;
-  eventLocation: string;
-  ticketType: string;
-  ticketCode: string;
-  status: 'UPCOMING' | 'USED' | 'EXPIRED';
-  qrCodeUrl?: string;
-}
+import {
+  useAttendeeTicketsByStatus,
+  AttendeeTicket,
+} from '@/lib/hooks-new/useAttendeeTicketsByStatus';
 
 function TicketsSkeleton() {
   return (
@@ -60,33 +52,17 @@ function TicketsSkeleton() {
 
 export default function AttendeeTicketsPage() {
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
-  const [tickets, setTickets] = useState<AttendeeTicket[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [selectedTicket, setSelectedTicket] = useState<AttendeeTicket | null>(
     null,
   );
   const [isDownloading, setIsDownloading] = useState(false);
 
+  const {
+    data: tickets = [],
+    isLoading,
+    error,
+  } = useAttendeeTicketsByStatus(activeTab);
   const ticketRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    async function fetchTickets() {
-      try {
-        setIsLoading(true);
-        const statusParam = activeTab === 'upcoming' ? 'UPCOMING' : 'PAST';
-        const data = await api<AttendeeTicket[]>(
-          `/tickets/my-tickets?status=${statusParam}`,
-        );
-        setTickets(data);
-      } catch (err: any) {
-        toast.error(err.message || 'Failed to load your tickets');
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    fetchTickets();
-  }, [activeTab]);
 
   const handleDownloadPdf = async () => {
     if (!ticketRef.current) return;
@@ -118,8 +94,8 @@ export default function AttendeeTicketsPage() {
       }
       pdf.save(`${selectedTicket?.ticketCode || 'gada-pass'}.pdf`);
       toast.success('Ticket PDF downloaded successfully!');
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
       toast.error('Failed to generate ticket PDF.');
     } finally {
       setIsDownloading(false);
@@ -162,9 +138,12 @@ export default function AttendeeTicketsPage() {
         </div>
       </div>
 
-
       {isLoading ? (
         <TicketsSkeleton />
+      ) : error ? (
+        <div className="rounded-2xl border border-[#ffb3a7] bg-[#fff0ed] p-6 text-center text-sm font-bold text-[#a13c2d]">
+          Failed to load your tickets
+        </div>
       ) : tickets && tickets.length > 0 ? (
         <div className="grid gap-4 sm:grid-cols-2">
           {tickets.map((ticket) => (

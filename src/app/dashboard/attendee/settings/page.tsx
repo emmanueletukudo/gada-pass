@@ -2,12 +2,12 @@
 
 import { useForm } from 'react-hook-form';
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
+import { useUpdateProfile } from '@/lib/hooks-new/useUpdateProfile';
 import { toast } from 'sonner';
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { GadaInput } from '@/components/common/gada-inputs';
 import { SettingsSkeleton } from '@/components/dashboard/common/settings-skeleton';
 import { Loader2 } from 'lucide-react';
-import { api } from '@/lib/api';
 
 interface AttendeeSettingsFormValues {
   firstName: string;
@@ -19,14 +19,13 @@ interface AttendeeSettingsFormValues {
 
 export default function AttendeeSettingsPage() {
   const { user, isLoading: isUserLoading } = useCurrentUser();
-  const [isSaving, setIsSaving] = useState(false);
-  const [disabled, setDisabled] = useState(true)
+  const updateProfileMutation = useUpdateProfile();
 
   const {
     register: field,
     handleSubmit,
     reset: resetProfileForm,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<AttendeeSettingsFormValues>({
     defaultValues: {
       firstName: '',
@@ -49,29 +48,27 @@ export default function AttendeeSettingsPage() {
     }
   }, [user, resetProfileForm]);
 
-  const onSettingsSubmit = async (values: AttendeeSettingsFormValues) => {
-    setIsSaving(true);
-    try {
-      await api('/users/profile', {
-        method: 'PATCH',
-        body: JSON.stringify({
-          firstName: values.firstName,
-          lastName: values.lastName,
-          hostName: values.hostName,
-          phone: values.phone,
-        }),
-      });
-
-      toast.success('Profile settings updated successfully.');
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : 'Failed to update profile settings.',
-      );
-    } finally {
-      setIsSaving(false);
-    }
+  const onSettingsSubmit = (values: AttendeeSettingsFormValues) => {
+    updateProfileMutation.mutate(
+      {
+        firstName: values.firstName,
+        lastName: values.lastName,
+        hostName: values.hostName,
+        phone: values.phone,
+      },
+      {
+        onSuccess: () => {
+          toast.success('Profile settings updated successfully.');
+        },
+        onError: (error) => {
+          toast.error(
+            error instanceof Error
+              ? error.message
+              : 'Failed to update profile settings.',
+          );
+        },
+      },
+    );
   };
 
   if (isUserLoading) {
@@ -148,11 +145,11 @@ export default function AttendeeSettingsPage() {
 
           <div className="pt-4 border-t border-[#dce1d5] flex justify-end">
             <button
-              disabled={isSaving || disabled}
+              disabled={updateProfileMutation.isPending || !isDirty}
               type="submit"
               className="inline-flex items-center gap-2 rounded-full bg-[#17211b] px-6 py-3 text-sm font-bold text-white transition disabled:opacity-40 hover:bg-[#25332b]"
             >
-              {isSaving ? (
+              {updateProfileMutation.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin text-[#d6f94a]" />
                   <span>Saving Changes...</span>
