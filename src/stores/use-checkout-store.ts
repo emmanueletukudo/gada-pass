@@ -18,16 +18,24 @@ export interface ActiveSelection {
   quantity: number;
 }
 
+export interface AttendeeInfo {
+  fullName: string;
+  email: string;
+  phone?: string;
+}
+
 interface CheckoutState {
   eventId: string | null;
   tiers: Tier[];
   quantities: Record<string, number>;
+  attendee: AttendeeInfo;
   isDrawerOpen: boolean;
   isDrawerVisible: boolean;
   isProcessing: boolean;
 
   initCheckout: (eventId: string, tiers: Tier[]) => void;
   setQuantity: (tierId: string, delta: number, maxAvailable: number) => void;
+  setAttendee: (info: Partial<AttendeeInfo>) => void;
   resetQuantities: () => void;
   openDrawer: () => void;
   closeDrawer: () => void;
@@ -38,12 +46,14 @@ interface CheckoutState {
   getPlatformFee: () => number;
   getTotal: () => number;
   getCurrencySymbol: () => string;
+  resetCheckout: () => void;
 }
 
 export const useCheckoutStore = create<CheckoutState>((set, get) => ({
   eventId: null,
   tiers: [],
   quantities: {},
+  attendee: { fullName: '', email: '', phone: '' },
   isDrawerOpen: false,
   isDrawerVisible: false,
   isProcessing: false,
@@ -64,6 +74,11 @@ export const useCheckoutStore = create<CheckoutState>((set, get) => ({
       };
     });
   },
+
+  setAttendee: (info) =>
+    set((state) => ({
+      attendee: { ...state.attendee, ...info },
+    })),
 
   resetQuantities: () => {
     set({ quantities: {} });
@@ -114,4 +129,15 @@ export const useCheckoutStore = create<CheckoutState>((set, get) => ({
     if (!tiers || tiers.length === 0) return '₦';
     return tiers[0]?.currency === 'NGN' ? '₦' : tiers[0]?.currency || '₦';
   },
+
+  resetCheckout: () =>
+    set({
+      eventId: null,
+      tiers: [],
+      quantities: {},
+      attendee: { fullName: '', email: '', phone: '' },
+      isDrawerOpen: false,
+      isDrawerVisible: false,
+      isProcessing: false,
+    }),
 }));
