@@ -1,21 +1,9 @@
 'use client';
 
-import { useState, useEffect, use } from 'react';
-import { api } from '@/lib/api';
+import { use } from 'react';
+import { useEventOverview } from '@/lib/hooks-new/useEventOverview';
 import { MetricCard } from '@/components/dashboard/mertics-card';
-import { toast } from 'sonner';
-import {
-  ShieldCheck,
-  ArrowUpRight,
-  Percent,
-  Users,
-  Ticket,
-  TrendingUp,
-  QrCode,
-  Clock,
-  Calendar,
-  Layers,
-} from 'lucide-react';
+import { ShieldCheck, ArrowUpRight, Percent, Users, Clock } from 'lucide-react';
 import Link from 'next/link';
 import { EventDetailSkeleton } from '@/components/dashboard/common/event-detail-skeleton';
 import {
@@ -31,74 +19,15 @@ import {
   Legend,
 } from 'recharts';
 
-interface DashboardData {
-  eventId: string;
-  eventName: string;
-  eventType: string;
-  startsAt: string;
-  endsAt: string;
-  orders: number;
-  attendees: number;
-  checkedIn: number;
-  checkInRatePercentage: number;
-  ticketTierCount: number;
-  revenue: string | number;
-  capacity: number | null;
-  tierBreakdown: Array<{
-    tierId: string;
-    name: string;
-    price: string;
-    currency: string;
-    quantityAllocated: number;
-    soldCount: number;
-    checkedInCount: number;
-    isMultiDay: boolean;
-    revenueGenerated: string;
-    occupancyRate: number;
-  }>;
-  dailyFootTraffic: Array<{
-    date: string;
-    totalScans: number;
-    uniqueAttendees: number;
-  }>;
-  hourlyVelocity: Array<{
-    hour: string;
-    scanCount: number;
-  }>;
-  agentPerformance: Array<{
-    operatorId: string;
-    operatorName: string;
-    scansProcessed: number;
-  }>;
-}
-
 interface EditEventPageProps {
   params: Promise<{ eventId: string }>;
 }
 
-export default function OrganizerTicketsAccessPage({
+export default function OrganizerEvent({
   params,
 }: EditEventPageProps) {
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
   const { eventId } = use(params);
-
-  useEffect(() => {
-    setIsLoading(true);
-    api<DashboardData>(`/organizer/events/${eventId}/dashboard`, {
-      method: 'GET',
-    })
-      .then((res) => {
-        setData(res);
-      })
-      .catch((err) => {
-        const message =
-          err instanceof Error ? err.message : 'Failed to load event data';
-        toast.error(message);
-      })
-      .finally(() => setIsLoading(false));
-  }, [eventId]);
+  const { data, isLoading, error } = useEventOverview(eventId);
 
   const formattedRevenue = data
     ? `₦${Number(data.revenue).toLocaleString('en-NG', {
@@ -107,8 +36,16 @@ export default function OrganizerTicketsAccessPage({
       })}`
     : '₦0.00';
 
-  if (isLoading || !data) {
+  if (isLoading) {
     return <EventDetailSkeleton />;
+  }
+
+  if (error || !data) {
+    return (
+      <div className="my-10 rounded-2xl border border-[#ffb3a7] bg-[#fff0ed] p-6 text-center text-sm font-bold text-[#a13c2d]">
+        {error instanceof Error ? error.message : 'Failed to load event data'}
+      </div>
+    );
   }
 
   return (
@@ -136,6 +73,7 @@ export default function OrganizerTicketsAccessPage({
           title="Ticket Varieties"
         />
       </div>
+
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-2xl border border-[#dce1d5] bg-[#fffef9] p-6 shadow-sm">
           <div className="mb-6 flex items-center justify-between">
@@ -204,6 +142,7 @@ export default function OrganizerTicketsAccessPage({
             )}
           </div>
         </div>
+
         <div className="rounded-2xl border border-[#dce1d5] bg-[#fffef9] p-6 shadow-sm">
           <div className="mb-6 flex items-center justify-between">
             <div>

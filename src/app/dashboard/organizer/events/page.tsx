@@ -1,39 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { api } from '@/lib/api';
+import { useOrganizerEvents } from '@/lib/hooks-new/useOrganizerEvents';
 import Link from 'next/link';
 import { Plus, Calendar, Ticket, ChevronRight } from 'lucide-react';
-import { toast } from 'sonner';
 import { OrganizerEventsSkeleton } from '@/components/dashboard/common/organizer-events-skeleton';
 
-interface TicketTier {
-  quantity: number;
-  soldCount: number;
-}
-
-interface OrganizerEvent {
-  id: string;
-  name: string;
-  startsAt?: string;
-  status?: 'DRAFT' | 'PUBLISHED' | 'PAST';
-  ticketTiers?: TicketTier[];
-}
-
 export default function OrganizerEventsPage() {
-  const [events, setEvents] = useState<OrganizerEvent[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    api<OrganizerEvent[]>('/organizer/events')
-      .then(setEvents)
-      .catch((error: unknown) => {
-        const message =
-          error instanceof Error ? error.message : 'Could not load your events';
-        toast.error(message);
-      })
-      .finally(() => setIsLoading(false));
-  }, []);
+  const { data: events = [], isLoading, error } = useOrganizerEvents();
 
   return (
     <div className="space-y-8 mt-10">
@@ -55,6 +28,12 @@ export default function OrganizerEventsPage() {
 
       {isLoading ? (
         <OrganizerEventsSkeleton />
+      ) : error ? (
+        <div className="rounded-2xl border border-[#ffb3a7] bg-[#fff0ed] p-6 text-center text-sm font-bold text-[#a13c2d]">
+          {error instanceof Error
+            ? error.message
+            : 'Could not load your events'}
+        </div>
       ) : events.length === 0 ? (
         <div className="rounded-2xl border border-[#dce1d5] bg-[#fffef9] p-12 text-center space-y-4">
           <Calendar className="mx-auto h-10 w-10 text-black" />
@@ -105,13 +84,12 @@ export default function OrganizerEventsPage() {
                   <div className="flex items-center gap-4 text-xs font-semibold text-[#6d766d]">
                     <span className="flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
-                      {new Date(event.startsAt as string).toLocaleString(
-                        'en-NG',
-                        {
-                          dateStyle: 'full',
-                          timeStyle: 'short',
-                        },
-                      )}
+                      {event.startsAt
+                        ? new Date(event.startsAt).toLocaleString('en-NG', {
+                            dateStyle: 'full',
+                            timeStyle: 'short',
+                          })
+                        : 'Date TBA'}
                     </span>
                     <span className="flex items-center gap-1">
                       <Ticket className="h-3 w-3" />

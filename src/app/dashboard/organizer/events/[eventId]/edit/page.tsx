@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState, useEffect, useCallback, useMemo } from 'react';
+import { use, useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -13,7 +13,6 @@ import {
   Save,
 } from 'lucide-react';
 
-import { api } from '@/lib/api';
 import { PaymentSettingsStep } from '@/components/dashboard/events/payment';
 import { EventFormDataPreview } from '@/components/dashboard/events/preview/types';
 import { StepIndicator } from '@/components/dashboard/events/create/StepIndicator';
@@ -27,9 +26,9 @@ import {
   EventFormValues,
   STEP_FIELDS,
 } from '@/components/dashboard/events/create/schema';
-import { updateEvent } from '@/lib/event';
 import { EditEventSkeleton } from '@/components/dashboard/common/edit-event-skeleton';
 import { EVENT_TYPES } from '@/components/dashboard/events/create/types';
+import { useEventDetail, useUpdateEvent } from '@/lib/hooks-new/useEditEvent';
 
 const STEP_LABELS = [
   'Event Type',
@@ -49,8 +48,9 @@ export default function EditEventPage({ params }: EditEventPageProps) {
   const router = useRouter();
 
   const [step, setStep] = useState(1);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { data: eventData, isLoading } = useEventDetail(eventId);
+  const updateEventMutation = useUpdateEvent();
 
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventFormSchema),
@@ -93,47 +93,44 @@ export default function EditEventPage({ params }: EditEventPageProps) {
 
   const { trigger, handleSubmit, watch, reset, setValue } = form;
 
-  const fetchEventDetails = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const data = await api<any>(`/organizer/events/${eventId}`);
-
+  useEffect(() => {
+    if (eventData) {
       const existingCoverUrl =
-        data.banner ||
-        (Array.isArray(data.images) && data.images.length > 0
-          ? data.images[0].url
+        eventData.banner ||
+        (Array.isArray(eventData.images) && eventData.images.length > 0
+          ? eventData.images[0].url
           : '') ||
         '';
 
       reset({
-        title: data.name || '',
-        description: data.description || '',
-        eventType: data.eventType || 'PARTY_SCENES',
-        slug: data.slug || '',
-        coverFees: data.coverFees ?? false,
-        categoryId: data.categoryId || '',
-        city: data.city || '',
-        venue: data.venue || '',
-        startDate: data.startsAt
-          ? new Date(data.startsAt).toISOString().slice(0, 16)
+        title: eventData.name || '',
+        description: eventData.description || '',
+        eventType: eventData.eventType || 'PARTY_SCENES',
+        slug: eventData.slug || '',
+        coverFees: eventData.coverFees ?? false,
+        categoryId: eventData.categoryId || '',
+        city: eventData.city || '',
+        venue: eventData.venue || '',
+        startDate: eventData.startsAt
+          ? new Date(eventData.startsAt).toISOString().slice(0, 16)
           : '',
-        endDate: data.endsAt
-          ? new Date(data.endsAt).toISOString().slice(0, 16)
+        endDate: eventData.endsAt
+          ? new Date(eventData.endsAt).toISOString().slice(0, 16)
           : '',
-        isOnline: data.isOnline ?? false,
-        meetingLink: data.meetingLink || '',
-        virtualPlatform: data.virtualPlatform || 'ZOOM',
-        meetingPasscode: data.meetingPasscode || '',
-        capacity: data.capacity || 100,
-        instagram: data.instagram || '',
-        x: data.twitter || data.x || '',
-        website: data.website || '',
+        isOnline: eventData.isOnline ?? false,
+        meetingLink: eventData.meetingLink || '',
+        virtualPlatform: eventData.virtualPlatform || 'ZOOM',
+        meetingPasscode: eventData.meetingPasscode || '',
+        capacity: eventData.capacity || 100,
+        instagram: eventData.instagram || '',
+        x: eventData.twitter || eventData.x || '',
+        website: eventData.website || '',
         coverImageUrl: existingCoverUrl,
         coverImageFiles: [],
-        settlementAccountId: data.settlementAccountId || '',
-        settlementAccount: data.settlementAccount || {},
-        ticketTiers: data.ticketTiers?.length
-          ? data.ticketTiers.map((tier: any) => ({
+        settlementAccountId: eventData.settlementAccountId || '',
+        settlementAccount: eventData.settlementAccount || {},
+        ticketTiers: eventData.ticketTiers?.length
+          ? eventData.ticketTiers.map((tier: any) => ({
               id: tier.id,
               name: tier.name,
               price: Number(tier.price),
@@ -157,17 +154,8 @@ export default function EditEventPage({ params }: EditEventPageProps) {
               },
             ],
       });
-    } catch (err) {
-      toast.error('Failed to fetch event parameters.');
-      console.error('Error fetching event:', err);
-    } finally {
-      setIsLoading(false);
     }
-  }, [eventId, reset]);
-
-  useEffect(() => {
-    fetchEventDetails();
-  }, [fetchEventDetails]);
+  }, [eventData, reset]);
 
   const handleNext = async () => {
     const fieldsToValidate = STEP_FIELDS[step];
@@ -184,59 +172,62 @@ export default function EditEventPage({ params }: EditEventPageProps) {
     setStep((prev) => Math.max(prev - 1, 1));
   };
 
-  const onFinalSubmit = async (values: EventFormValues) => {
-    setIsSubmitting(true);
-    try {
-      const imageFiles: File[] = values.coverImageFiles ?? [];
-      const isOnline =
-        values.eventType === 'ONLINE_EVENT' || Boolean(values.isOnline);
+  const onFinalSubmit = (values: EventFormValues) => {
+    const imageFiles: File[] = values.coverImageFiles ?? [];
+    const isOnline =
+      values.eventType === 'ONLINE_EVENT' || Boolean(values.isOnline);
 
-      await updateEvent(eventId, {
-        name: values.title,
-        description: values.description,
-        eventType: values.eventType,
-        slug: values.slug,
-        coverFees: values.coverFees ?? false,
-        categoryId: values.categoryId,
-        city: values.city,
-        venue: values.venue,
-        startsAt: values.startDate,
-        endsAt: values.endDate,
-        capacity:
-          values.capacity ||
-          values.ticketTiers.reduce((acc, cur) => acc + cur.quantity, 0),
-        isOnline,
-        meetingLink: isOnline ? values.meetingLink : undefined,
-        virtualPlatform: isOnline ? values.virtualPlatform : undefined,
-        meetingPasscode: isOnline ? values.meetingPasscode : undefined,
-        settlementAccountId:
-          values.eventType === 'FREE_EVENT'
-            ? undefined
-            : values.settlementAccountId,
-        instagram: values.instagram || undefined,
-        x: values.x || undefined,
-        website: values.website || undefined,
-        images: imageFiles,
-        banner: values.coverImageUrl || undefined,
-        ticketTiers: values.ticketTiers.map((tier) => ({
-          id: tier.id,
-          name: tier.name,
-          price: values.eventType === 'FREE_EVENT' ? 0 : Number(tier.price),
-          quantity: Number(tier.quantity),
-          isMultiDay: Boolean(tier.isMultiDay),
-          maxScansPerDay: tier.maxScansPerDay ? Number(tier.maxScansPerDay) : 1,
-          validDate: tier.validDate || undefined,
-        })),
-      });
+    const payload = {
+      name: values.title,
+      description: values.description,
+      eventType: values.eventType,
+      slug: values.slug,
+      coverFees: values.coverFees ?? false,
+      categoryId: values.categoryId,
+      city: values.city,
+      venue: values.venue,
+      startsAt: values.startDate,
+      endsAt: values.endDate,
+      capacity:
+        values.capacity ||
+        values.ticketTiers.reduce((acc, cur) => acc + cur.quantity, 0),
+      isOnline,
+      meetingLink: isOnline ? values.meetingLink : undefined,
+      virtualPlatform: isOnline ? values.virtualPlatform : undefined,
+      meetingPasscode: isOnline ? values.meetingPasscode : undefined,
+      settlementAccountId:
+        values.eventType === 'FREE_EVENT'
+          ? undefined
+          : values.settlementAccountId,
+      instagram: values.instagram || undefined,
+      x: values.x || undefined,
+      website: values.website || undefined,
+      images: imageFiles,
+      banner: values.coverImageUrl || undefined,
+      ticketTiers: values.ticketTiers.map((tier) => ({
+        id: tier.id,
+        name: tier.name,
+        price: values.eventType === 'FREE_EVENT' ? 0 : Number(tier.price),
+        quantity: Number(tier.quantity),
+        isMultiDay: Boolean(tier.isMultiDay),
+        maxScansPerDay: tier.maxScansPerDay ? Number(tier.maxScansPerDay) : 1,
+        validDate: tier.validDate || undefined,
+      })),
+    };
 
-      toast.success('Event updated successfully!');
-      router.push(`/dashboard/organizer/events/${eventId}`);
-    } catch (err) {
-      toast.error('Failed to update event parameters.');
-      console.error(err);
-    } finally {
-      setIsSubmitting(false);
-    }
+    updateEventMutation.mutate(
+      { eventId, payload },
+      {
+        onSuccess: () => {
+          toast.success('Event updated successfully!');
+          router.push(`/dashboard/organizer/events/${eventId}`);
+        },
+        onError: (err) => {
+          toast.error('Failed to update event parameters.');
+          console.error(err);
+        },
+      },
+    );
   };
 
   const currentFormValues = watch();
@@ -320,10 +311,10 @@ export default function EditEventPage({ params }: EditEventPageProps) {
           <button
             type="button"
             onClick={handleSubmit(onFinalSubmit)}
-            disabled={isSubmitting}
+            disabled={updateEventMutation.isPending}
             className="inline-flex items-center gap-2 rounded-full bg-[#17211b] px-5 py-2.5 text-xs font-bold text-white transition hover:bg-[#25332b] disabled:opacity-50"
           >
-            {isSubmitting ? (
+            {updateEventMutation.isPending ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
             ) : (
               <Save className="h-3.5 w-3.5" />
@@ -402,7 +393,7 @@ export default function EditEventPage({ params }: EditEventPageProps) {
             onBack={handlePrev}
             onPublish={handleSubmit(onFinalSubmit)}
             onSaveDraft={() => toast.info('Changes stored in draft state.')}
-            isSubmitting={isSubmitting}
+            isSubmitting={updateEventMutation.isPending}
           />
         )}
 

@@ -1,10 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { api } from '@/lib/api';
+import { useOrganizerDashboard } from '@/lib/hooks-new/useOrganizerDashboard';
 import { MetricCard } from '@/components/dashboard/mertics-card';
 import { QuickActions } from '@/components/dashboard/quick-action';
-import { toast } from 'sonner';
 import { OrganizerMetricsSkeleton } from '@/components/dashboard/common/organizer-metrics-skeleton';
 import { Calendar, ArrowUpRight, TrendingUp } from 'lucide-react';
 import Link from 'next/link';
@@ -18,50 +16,8 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-interface OrganizerOverview {
-  totalEvents: number;
-  activeEvents: number;
-  grossRevenue: string;
-  totalOrders: number;
-  totalTicketsSold: number;
-  totalCheckIns: number;
-  overallTurnoutRate: number;
-  recentEvents: Array<{
-    id: string;
-    name: string;
-    status: string;
-    startsAt: string;
-    eventType: string;
-  }>;
-  monthlyRevenueGraph: Array<{
-    month: string;
-    revenue: number;
-    checkIns?: number;
-  }>;
-}
-
 export default function OrganizerDashboardPage() {
-  const [overview, setOverview] = useState<OrganizerOverview | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    setIsLoading(true);
-
-    api<OrganizerOverview>('/organizer/dashboard/overview')
-      .then((data) => {
-        setOverview(data);
-      })
-      .catch((error: unknown) => {
-        const message =
-          error instanceof Error
-            ? error.message
-            : 'Could not load organizer overview dashboard';
-        toast.error(message);
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
-  }, []);
+  const { data: overview, isLoading, error } = useOrganizerDashboard();
 
   const formattedRevenue = overview
     ? `₦${Number(overview.grossRevenue || 0).toLocaleString('en-NG', {
@@ -72,6 +28,16 @@ export default function OrganizerDashboardPage() {
 
   if (isLoading) {
     return <OrganizerMetricsSkeleton />;
+  }
+
+  if (error) {
+    return (
+      <div className="my-10 rounded-2xl border border-[#ffb3a7] bg-[#fff0ed] p-6 text-center text-sm font-bold text-[#a13c2d]">
+        {error instanceof Error
+          ? error.message
+          : 'Could not load organizer overview dashboard'}
+      </div>
+    );
   }
 
   return (
@@ -223,7 +189,7 @@ export default function OrganizerDashboardPage() {
                     </span>
                     <span>&bull;</span>
                     <span className="uppercase font-semibold">
-                      {evt.eventType.replace("_", " ")}
+                      {evt.eventType.replace('_', ' ')}
                     </span>
                   </div>
                 </div>

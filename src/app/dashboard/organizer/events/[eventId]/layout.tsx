@@ -3,7 +3,7 @@
 import { use } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { LayoutDashboard, Users, Settings, ArrowLeft, Weight, CalendarDays, Code, CodeXml } from 'lucide-react';
+import { Users, ArrowLeft, Weight, CalendarDays, CodeXml } from 'lucide-react';
 
 interface EventLayoutProps {
   children: React.ReactNode;

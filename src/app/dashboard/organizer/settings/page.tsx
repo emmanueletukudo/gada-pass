@@ -4,10 +4,12 @@ import { useForm } from 'react-hook-form';
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { GadaInput } from '@/components/common/gada-inputs';
 import { PaymentSettingsStep } from '@/components/dashboard/events/payment';
 import { SettingsSkeleton } from '@/components/dashboard/common/settings-skeleton';
 import { OrganizationLogoSettings } from '@/components/common/organization-logo-settings';
+import { useSettlementStore } from '@/stores/use-settlement-store';
 
 interface SettingsFormValues {
   hostName: string;
@@ -24,6 +26,9 @@ interface SettlementAccountValues {
 
 export default function OrganizerSettingsPage() {
   const { user, isLoading: isUserLoading } = useCurrentUser();
+  const queryClient = useQueryClient();
+  const resetBanner = useSettlementStore((s) => s.resetBanner);
+
   const [isSaving, setIsSaving] = useState(false);
   const [currentLogoUrl, setCurrentLogoUrl] = useState<string>('');
 
@@ -57,7 +62,7 @@ export default function OrganizerSettingsPage() {
         supportEmail: user.email || '',
       });
 
-      setCurrentLogoUrl(user.logoUrl as string);
+      setCurrentLogoUrl((user.logoUrl as string) || '');
     }
   }, [user, resetProfileForm]);
 
@@ -67,10 +72,15 @@ export default function OrganizerSettingsPage() {
       await new Promise((resolve) => setTimeout(resolve, 800));
       toast.success('Workspace preferences updated successfully.');
     } catch {
-      toast.error('Failed to commit structural workspace modifications.');
+      toast.error('Failed to commit workspace modifications.');
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleSettlementAccountUpdated = () => {
+    queryClient.invalidateQueries({ queryKey: ['settlement-accounts'] });
+    resetBanner();
   };
 
   if (isUserLoading) {
@@ -79,13 +89,12 @@ export default function OrganizerSettingsPage() {
 
   return (
     <div className="space-y-8 px-4 sm:px-6 lg:px-0">
-      {/* Responsive layout wrapper: stacks on mobile/tablet, side-by-side on lg+ desktop */}
-      <div className="flex flex-col lg:flex-row justify-center items-center lg:items-start gap-10 mt-6 lg:mt-10">
+      <div className="mt-6 flex flex-col items-center justify-center gap-10 lg:mt-10 lg:flex-row lg:items-start">
         <div className="w-full max-w-lg lg:max-w-none">
           <h2 className="text-xl font-bold tracking-tight">Settings</h2>
           <form
             onSubmit={handleSubmit(onSettingsSubmit)}
-            className="space-y-6 rounded-2xl mt-5 border border-[#dce1d5] bg-[#fffef9] p-6 shadow-sm"
+            className="mt-5 space-y-6 rounded-2xl border border-[#dce1d5] bg-[#fffef9] p-6 shadow-sm"
           >
             <OrganizationLogoSettings currentLogoUrl={currentLogoUrl} />
             <div className="space-y-4">
@@ -111,10 +120,10 @@ export default function OrganizerSettingsPage() {
               />
             </div>
 
-            <div className="pt-4 border-[#dce1d5] flex justify-end">
+            <div className="flex justify-end pt-4 border-[#dce1d5]">
               <button
                 disabled={isSaving}
-                className="w-full sm:w-auto rounded-full bg-[#17211b] px-6 py-3 text-sm font-bold text-white transition disabled:opacity-40 hover:bg-[#25332b]"
+                className="w-full rounded-full bg-[#17211b] px-6 py-3 text-sm font-bold text-white transition hover:bg-[#25332b] disabled:opacity-40 sm:w-auto"
               >
                 {isSaving ? 'Saving Configurations...' : 'Update Settings'}
               </button>
@@ -122,8 +131,12 @@ export default function OrganizerSettingsPage() {
           </form>
         </div>
 
-        <div className="w-full max-w-lg mt-0 lg:mt-10">
-          <PaymentSettingsStep mode="settings" form={settlementForm} />
+        <div className="mt-0 w-full max-w-lg lg:mt-10">
+          <PaymentSettingsStep
+            mode="settings"
+            form={settlementForm}
+            onSuccess={handleSettlementAccountUpdated}
+          />
         </div>
       </div>
     </div>

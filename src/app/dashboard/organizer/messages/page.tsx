@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   ArrowUpRight,
   MessageCircle,
@@ -12,57 +12,19 @@ import {
   Ticket,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { api } from '@/lib/api';
 import { NoInquiriesState } from '@/components/dashboard/no-inquiries';
 import { MessagingHubSkeleton } from '@/components/dashboard/common/messaging-hub-skeleton';
-
-interface SupportInquiry {
-  id: string;
-  orderId: string;
-  guestName: string;
-  eventName: string;
-  phoneNumber: string;
-  ticketTierName?: string;
-  ticketQuantity: number;
-  lastMessage: string;
-  timestamp: string;
-  status: 'OPEN' | 'RESOLVED';
-}
+import {
+  useSupportInquiries,
+  useUpdateInquiryStatus,
+  SupportInquiry,
+} from '@/lib/hooks-new/useSupportInquiries';
 
 export default function OrganizerMessagesPage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [tickets, setTickets] = useState<SupportInquiry[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
- const fetchInquiries = async () => {
-   try {
-     setIsLoading(true);
-     const response = await api<SupportInquiry[] | { data: SupportInquiry[] }>(
-       '/support-inquiries/organizer',
-       {
-         method: 'GET',
-       },
-     );
-
-     const inquiryData = Array.isArray(response)
-       ? response
-       : Array.isArray((response as { data?: SupportInquiry[] })?.data)
-         ? (response as { data: SupportInquiry[] }).data
-         : [];
-
-     setTickets(inquiryData);
-   } catch (error) {
-     console.error('Failed to fetch inquiries:', error);
-     toast.error('Failed to load guest inquiries');
-     setTickets([]);
-   } finally {
-     setIsLoading(false);
-   }
- };
-
-  useEffect(() => {
-    fetchInquiries();
-  }, []);
+  const { data: tickets = [], isLoading, error } = useSupportInquiries();
+  const updateStatusMutation = useUpdateInquiryStatus();
 
   const handleWhatsAppRedirect = (
     phone: string,
@@ -80,33 +42,26 @@ export default function OrganizerMessagesPage() {
     );
   };
 
-  const handleToggleStatus = async (
+  const handleToggleStatus = (
     id: string,
     currentStatus: 'OPEN' | 'RESOLVED',
   ) => {
     const newStatus = currentStatus === 'OPEN' ? 'RESOLVED' : 'OPEN';
 
-    setTickets((prev) =>
-      (prev || []).map((t) => (t.id === id ? { ...t, status: newStatus } : t)),
+    updateStatusMutation.mutate(
+      { id, status: newStatus },
+      {
+        onSuccess: () => {
+          toast.success(
+            `Inquiry marked as ${newStatus === 'RESOLVED' ? 'Resolved' : 'Open'}`,
+          );
+        },
+        onError: (err) => {
+          console.error('Failed to update status:', err);
+          toast.error('Failed to update status');
+        },
+      },
     );
-
-    try {
-      await api(`/support-inquiries/${id}/status`, {
-        method: 'PATCH',
-        body: JSON.stringify({ status: newStatus }),
-      });
-      toast.success(
-        `Inquiry marked as ${newStatus === 'RESOLVED' ? 'Resolved' : 'Open'}`,
-      );
-    } catch (error) {
-      console.error('Failed to update status:', error);
-      toast.error('Failed to update status');
-      setTickets((prev) =>
-        (prev || []).map((t) =>
-          t.id === id ? { ...t, status: currentStatus } : t,
-        ),
-      );
-    }
   };
 
   const safeTickets = Array.isArray(tickets) ? tickets : [];
@@ -195,6 +150,10 @@ export default function OrganizerMessagesPage() {
 
         {isLoading ? (
           <MessagingHubSkeleton />
+        ) : error ? (
+          <div className="rounded-2xl border border-[#ffb3a7] bg-[#fff0ed] p-6 text-center text-sm font-bold text-[#a13c2d]">
+            Failed to load guest inquiries
+          </div>
         ) : filteredTickets.length > 0 ? (
           <div className="divide-y divide-[#dce1d5]">
             {filteredTickets.map((ticket) => (
@@ -240,7 +199,8 @@ export default function OrganizerMessagesPage() {
                 <div className="flex items-center justify-between gap-3 sm:justify-end">
                   <button
                     onClick={() => handleToggleStatus(ticket.id, ticket.status)}
-                    className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-bold transition ${
+                    disabled={updateStatusMutation.isPending}
+                    className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-bold transition disabled:opacity-50 ${
                       ticket.status === 'OPEN'
                         ? 'border-[#dce1d5] bg-transparent text-[#6d766d] hover:bg-[#17211b]/5'
                         : 'border-[#17211b]/10 bg-[#17211b]/5 text-[#17211b] hover:bg-[#17211b]/10'
