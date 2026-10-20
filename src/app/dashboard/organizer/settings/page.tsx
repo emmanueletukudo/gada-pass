@@ -2,6 +2,7 @@
 
 import { useForm } from 'react-hook-form';
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
+import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -26,11 +27,11 @@ interface SettlementAccountValues {
 
 export default function OrganizerSettingsPage() {
   const { user, isLoading: isUserLoading } = useCurrentUser();
+  const { data: session, update: updateSession } = useSession();
   const queryClient = useQueryClient();
   const resetBanner = useSettlementStore((s) => s.resetBanner);
 
   const [isSaving, setIsSaving] = useState(false);
-  const [currentLogoUrl, setCurrentLogoUrl] = useState<string>('');
 
   const {
     register: field,
@@ -61,8 +62,6 @@ export default function OrganizerSettingsPage() {
         payoutAccount: '',
         supportEmail: user.email || '',
       });
-
-      setCurrentLogoUrl((user.logoUrl as string) || '');
     }
   }, [user, resetProfileForm]);
 
@@ -78,12 +77,24 @@ export default function OrganizerSettingsPage() {
     }
   };
 
+  const handleLogoChange = async (newLogoUrl: string | null) => {
+    await updateSession({
+      ...session,
+      user: {
+        ...session?.user,
+        logoUrl: newLogoUrl,
+      },
+    });
+
+    void queryClient.invalidateQueries({ queryKey: ['current-user'] });
+  };
+
   const handleSettlementAccountUpdated = () => {
     queryClient.invalidateQueries({ queryKey: ['settlement-accounts'] });
     resetBanner();
   };
 
-  if (isUserLoading) {
+  if (isUserLoading || !user) {
     return <SettingsSkeleton />;
   }
 
@@ -96,7 +107,11 @@ export default function OrganizerSettingsPage() {
             onSubmit={handleSubmit(onSettingsSubmit)}
             className="mt-5 space-y-6 rounded-2xl border border-[#dce1d5] bg-[#fffef9] p-6 shadow-sm"
           >
-            <OrganizationLogoSettings currentLogoUrl={currentLogoUrl} />
+            <OrganizationLogoSettings
+              key={user.email || 'logo-settings'}
+              currentLogoUrl={user.logoUrl as string}
+              onLogoChange={handleLogoChange}
+            />
             <div className="space-y-4">
               <GadaInput
                 register={field}

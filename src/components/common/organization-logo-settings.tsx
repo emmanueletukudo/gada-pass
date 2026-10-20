@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Image as ImageIcon, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { mediaUrl } from '@/lib/api'; 
+import { mediaUrl } from '@/lib/api';
 import { useUploadFile } from '@/lib/hooks-new/useMedia';
 import { useUpdateLogoMutation } from '@/lib/hooks-new/useSettings';
 
@@ -52,7 +52,8 @@ export function OrganizationLogoSettings({
       const publicUrl = await uploadFileMutation.mutateAsync(file);
       await updateLogoMutation.mutateAsync(publicUrl);
 
-      setPreviewUrl(mediaUrl(publicUrl));
+      const resolvedUrl = mediaUrl(publicUrl);
+      setPreviewUrl(resolvedUrl);
       toast.success('Host logo uploaded successfully!');
       onLogoChange?.(publicUrl);
     } catch {
@@ -67,6 +68,7 @@ export function OrganizationLogoSettings({
       toast.success('Logo removed successfully.');
       onLogoChange?.(null);
     } catch {
+      toast.error('Failed to remove logo');
     }
   };
 
