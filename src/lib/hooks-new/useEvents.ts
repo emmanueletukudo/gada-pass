@@ -99,15 +99,6 @@ export function useEventCategories() {
   });
 }
 
-export function useSettlementAccounts() {
-  return useQuery({
-    queryKey: ['settlement-accounts'],
-    queryFn: () =>
-      api<SetlementAccount[]>('/settlement-accounts/organization', {
-        method: 'GET',
-      }),
-  });
-}
 
 export function useSupportedBanks() {
   return useQuery({

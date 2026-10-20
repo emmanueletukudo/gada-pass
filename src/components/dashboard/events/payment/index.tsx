@@ -8,11 +8,11 @@ import { AccountPreviewCard } from './AccountPreviewCard';
 import { AddAccountModal } from './AddAccountModal';
 
 import {
-  useSettlementAccounts,
   useSupportedBanks,
   SetlementAccount,
 } from '@/lib/hooks-new/useEvents';
 import { useEventFormStore } from '@/stores/use-event-form-store';
+import { useSettlementAccounts } from '@/lib/hooks-new/useSettlementAccounts';
 
 interface PaymentSettingsStepProps {
   form: UseFormReturn<any>;
