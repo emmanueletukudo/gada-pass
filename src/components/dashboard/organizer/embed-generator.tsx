@@ -1,20 +1,15 @@
 'use client';
 
-import { useState } from 'react';
-import {
-  Copy,
-  Check,
-  ExternalLink,
-  Settings2,
-  Eye,
-  Layout,
-} from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Copy, Check, ExternalLink, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface EmbedGeneratorProps {
   eventId: string;
   eventTitle?: string;
 }
+
+const WIDTH_PRESETS = ['100%', '450px', '380px'] as const;
 
 export default function EmbedGenerator({
   eventId,
@@ -24,10 +19,17 @@ export default function EmbedGenerator({
   const [height, setHeight] = useState<number>(580);
   const [borderRadius, setBorderRadius] = useState<number>(24);
   const [showBorder, setShowBorder] = useState<boolean>(true);
+
   const [copiedCode, setCopiedCode] = useState<boolean>(false);
   const [copiedUrl, setCopiedUrl] = useState<boolean>(false);
+  const [origin, setOrigin] = useState<string>('');
 
-  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setOrigin(window.location.origin);
+    }
+  }, []);
+
   const embedUrl = `${origin}/embed/events/${eventId}`;
 
   const borderStyle = showBorder
@@ -35,18 +37,26 @@ export default function EmbedGenerator({
     : 'border: none;';
   const iframeSnippet = `<iframe\n  src="${embedUrl}"\n  width="${width}"\n  height="${height}px"\n  style="${borderStyle} border-radius: ${borderRadius}px; overflow: hidden;"\n  title="${eventTitle || 'Gada Pass Ticket Widget'}"\n  loading="lazy"\n></iframe>`;
 
-  const handleCopyCode = () => {
-    navigator.clipboard.writeText(iframeSnippet);
-    setCopiedCode(true);
-    toast.success('Iframe embed code copied to clipboard!');
-    setTimeout(() => setCopiedCode(false), 2000);
+  const handleCopyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(iframeSnippet);
+      setCopiedCode(true);
+      toast.success('Iframe embed code copied to clipboard!');
+      setTimeout(() => setCopiedCode(false), 2000);
+    } catch {
+      toast.error('Failed to copy code to clipboard.');
+    }
   };
 
-  const handleCopyUrl = () => {
-    navigator.clipboard.writeText(embedUrl);
-    setCopiedUrl(true);
-    toast.success('Embed URL copied to clipboard!');
-    setTimeout(() => setCopiedUrl(false), 2000);
+  const handleCopyUrl = async () => {
+    try {
+      await navigator.clipboard.writeText(embedUrl);
+      setCopiedUrl(true);
+      toast.success('Embed URL copied to clipboard!');
+      setTimeout(() => setCopiedUrl(false), 2000);
+    } catch {
+      toast.error('Failed to copy URL to clipboard.');
+    }
   };
 
   return (
@@ -81,7 +91,7 @@ export default function EmbedGenerator({
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-[#17211b]">Width</label>
             <div className="grid grid-cols-3 gap-2">
-              {['100%', '450px', '380px'].map((preset) => (
+              {WIDTH_PRESETS.map((preset) => (
                 <button
                   key={preset}
                   type="button"
@@ -99,11 +109,9 @@ export default function EmbedGenerator({
           </div>
 
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-[#17211b]">
-                Height ({height}px)
-              </label>
-            </div>
+            <label className="text-xs font-bold text-[#17211b]">
+              Height ({height}px)
+            </label>
             <input
               type="range"
               min="400"
@@ -116,11 +124,9 @@ export default function EmbedGenerator({
           </div>
 
           <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-[#17211b]">
-                Corner Rounding ({borderRadius}px)
-              </label>
-            </div>
+            <label className="text-xs font-bold text-[#17211b]">
+              Corner Rounding ({borderRadius}px)
+            </label>
             <input
               type="range"
               min="0"
@@ -188,7 +194,7 @@ export default function EmbedGenerator({
           <div className="rounded-2xl border border-dashed border-[#dce1d5] bg-[#f7f7f2] p-4 flex items-center justify-center overflow-x-auto min-h-[450px]">
             <div
               style={{
-                width: width,
+                width,
                 height: `${height}px`,
                 borderRadius: `${borderRadius}px`,
                 overflow: 'hidden',

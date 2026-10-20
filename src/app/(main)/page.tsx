@@ -6,7 +6,7 @@ import { Carousel } from '@/components/carousel';
 import { ArrowRight } from 'lucide-react';
 import { EventCategories } from '@/components/events/event-categories';
 import { EventList } from '@/components/events/event-list';
-import { useEvents } from '@/lib/hooks/useEvents';
+import { useEvents } from '@/lib/hooks-new/useEvents';
 import { MobileAppSection } from '@/components/app-section';
 import { FaqSection } from '@/components/faq-section';
 

@@ -13,6 +13,7 @@ import { GadaInput } from '@/components/common/gada-inputs';
 import { GadaDateTimePicker } from '@/components/common/gada-datetime-picker';
 import { EventFormValues } from './schema';
 import { GadaCategories } from './gada-categories';
+import { useEventFormStore } from '@/stores/use-event-form-store';
 
 interface Step2Props {
   form: UseFormReturn<EventFormValues>;
@@ -35,6 +36,8 @@ export function Step2DateLocation({ form }: Step2Props) {
     formState: { errors },
   } = form;
 
+  const updateFormData = useEventFormStore((state) => state.updateFormData);
+
   const eventType = watch('eventType');
   const isOnline = eventType === 'ONLINE_EVENT';
   const selectedPlatform = watch('virtualPlatform') || 'ZOOM';
@@ -46,7 +49,7 @@ export function Step2DateLocation({ form }: Step2Props) {
       </div>
       {isOnline ? (
         <div className="space-y-4 rounded-2xl border border-[#dce1d5] bg-[#fffef9] p-6 shadow-sm">
-          <div className="flex items-center gap-2 pb-2 border-b border-[#dce1d5]">
+          <div className="flex items-center gap-2 border-b border-[#dce1d5] pb-2">
             <Video className="h-5 w-5 text-[#ff5500]" />
             <h4 className="text-xs font-bold uppercase tracking-wider text-[#17211b]">
               Online Meeting Details
@@ -62,11 +65,12 @@ export function Step2DateLocation({ form }: Step2Props) {
                 <button
                   key={platform.id}
                   type="button"
-                  onClick={() =>
+                  onClick={() => {
                     setValue('virtualPlatform', platform.id, {
                       shouldValidate: true,
-                    })
-                  }
+                    });
+                    updateFormData({ virtualPlatform: platform.id });
+                  }}
                   className={`rounded-xl border p-2.5 text-center text-xs font-bold transition ${
                     selectedPlatform === platform.id
                       ? 'border-[#17211b] bg-[#17211b] text-white'
@@ -89,6 +93,7 @@ export function Step2DateLocation({ form }: Step2Props) {
               placeHolder="https://zoom.us/j/123456789 or YouTube Live URL"
               styles="pl-9"
               required
+              onChange={(e) => updateFormData({ meetingLink: e.target.value })}
               error={errors.meetingLink?.message}
             />
           </div>
@@ -102,6 +107,9 @@ export function Step2DateLocation({ form }: Step2Props) {
               label="Passcode / Key (Optional)"
               placeHolder="e.g. 884920"
               styles="pl-9"
+              onChange={(e) =>
+                updateFormData({ meetingPasscode: e.target.value })
+              }
               error={errors.meetingPasscode?.message}
             />
           </div>
@@ -118,6 +126,7 @@ export function Step2DateLocation({ form }: Step2Props) {
               placeHolder="e.g. Lagos, Abuja, Uyo"
               styles="pl-9"
               required
+              onChange={(e) => updateFormData({ city: e.target.value })}
               error={errors.city?.message}
             />
           </div>
@@ -129,6 +138,7 @@ export function Step2DateLocation({ form }: Step2Props) {
             type="text"
             placeHolder="e.g. Eko Hotel, Victoria Island"
             required
+            onChange={(e) => updateFormData({ venue: e.target.value })}
             error={errors.venue?.message}
           />
         </div>
@@ -162,6 +172,7 @@ export function Step2DateLocation({ form }: Step2Props) {
           label="Capacity"
           placeHolder="e.g. 500"
           required
+          onChange={(e) => updateFormData({ capacity: Number(e.target.value) })}
           error={errors.capacity?.message}
         />
       </div>
@@ -180,6 +191,7 @@ export function Step2DateLocation({ form }: Step2Props) {
               label="Instagram Profile"
               placeHolder="https://instagram.com/..."
               styles="pl-9"
+              onChange={(e) => updateFormData({ instagram: e.target.value })}
               error={errors.instagram?.message}
             />
           </div>
@@ -193,6 +205,7 @@ export function Step2DateLocation({ form }: Step2Props) {
               label="X / Twitter Handle"
               placeHolder="https://x.com/..."
               styles="pl-9"
+              onChange={(e) => updateFormData({ x: e.target.value })}
               error={errors.x?.message}
             />
           </div>
@@ -206,6 +219,7 @@ export function Step2DateLocation({ form }: Step2Props) {
               label="Portfolio / Website"
               placeHolder="https://yourdomain.com"
               styles="pl-9"
+              onChange={(e) => updateFormData({ website: e.target.value })}
               error={errors.website?.message}
             />
           </div>

@@ -2,7 +2,6 @@
 
 import {
   Calendar,
-  Globe,
   Landmark,
   ShieldCheck,
   Sparkles,
@@ -56,7 +55,7 @@ export function EventSummaryGrid({
           <div>
             <p className="font-bold text-[#6d766d]">Public Link Slug</p>
             <p className="font-semibold text-[#17211b] mt-0.5 truncate">
-             {`${window.location.origin}/events/`}
+              {`${window.location.origin}/events/`}
               <span className="text-[#ff5500]">
                 {formData.slug || 'untitled'}
               </span>

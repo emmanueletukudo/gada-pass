@@ -1,15 +1,15 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { BankSelect, BankOption } from '@/components/common/BankSelect';
 import {
-  createSetlementAccounts,
-  verifyBankAccount,
+  useVerifyBankAccount,
+  useCreateSettlementAccount,
   SetlementAccount,
   supportedBanksResponse,
-} from '@/lib/event';
-import { BankSelect, BankOption } from '@/components/common/BankSelect';
+} from '@/lib/hooks-new/useEvents';
 
 interface AddAccountModalProps {
   isOpen: boolean;
@@ -29,8 +29,16 @@ export function AddAccountModal({
   const [selectedBankCode, setSelectedBankCode] = useState('');
   const [newAccountNumber, setNewAccountNumber] = useState('');
   const [newAccountName, setNewAccountName] = useState('');
-  const [isResolving, setIsResolving] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const shouldVerify =
+    newAccountNumber.length === 10 && Boolean(selectedBankCode);
+  const verifyInput = shouldVerify
+    ? { accountNumber: newAccountNumber, bankCode: selectedBankCode }
+    : null;
+
+  const { data: verificationData, isLoading: isResolving } =
+    useVerifyBankAccount(verifyInput);
+  const createAccountMutation = useCreateSettlementAccount();
 
   const bankOptions: BankOption[] = supportedBanks;
 
@@ -45,53 +53,22 @@ export function AddAccountModal({
     onClose();
   };
 
-  const triggerVerification = useCallback(
-    async (accNum: string, code: string) => {
-      if (accNum.length === 10 && code) {
-        setIsResolving(true);
-        setNewAccountName('');
-        try {
-          const result = await verifyBankAccount({
-            accountNumber: accNum,
-            bankCode: code,
-          });
-
-          if (result.accountName) {
-            setNewAccountName(result.accountName);
-            toast.success('Account name verified');
-          } else {
-            toast.error('Could not verify account details');
-          }
-        } catch (error: any) {
-          console.error('Account verification error:', error);
-          toast.error(
-            error?.response?.data?.message ||
-              'Failed to verify account number. Please check details.',
-          );
-        } finally {
-          setIsResolving(false);
-        }
-      }
-    },
-    [],
-  );
-
   const handleBankChange = (code: string) => {
     setSelectedBankCode(code);
     if (newAccountNumber.length === 10) {
-      triggerVerification(newAccountNumber, code);
+      setNewAccountName('');
     }
   };
 
   const handleAccountNumberChange = (val: string) => {
     const cleanVal = val.replace(/\D/g, '');
     setNewAccountNumber(cleanVal);
-    if (cleanVal.length === 10 && selectedBankCode) {
-      triggerVerification(cleanVal, selectedBankCode);
-    } else {
+    if (cleanVal.length === 10) {
       setNewAccountName('');
     }
   };
+
+  const resolvedAccountName = verificationData?.accountName || newAccountName;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,22 +76,21 @@ export function AddAccountModal({
     if (
       !selectedBankCode ||
       newAccountNumber.length !== 10 ||
-      !newAccountName
+      !resolvedAccountName
     ) {
       toast.error('Please complete bank selection and account verification.');
       return;
     }
 
-    setIsSubmitting(true);
     try {
       const selectedBank = supportedBanks.find(
         (b) => b.code === selectedBankCode,
       );
 
-      const newAccount = await createSetlementAccounts({
+      const newAccount = await createAccountMutation.mutateAsync({
         bankName: selectedBank?.bank,
         bankCode: selectedBank?.code,
-        accountName: newAccountName,
+        accountName: resolvedAccountName,
         accountNumber: newAccountNumber,
         isDefault: true,
       });
@@ -134,8 +110,6 @@ export function AddAccountModal({
       }
     } catch (error) {
       console.error('Failed to create settlement account:', error);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -186,9 +160,9 @@ export function AddAccountModal({
             </div>
           )}
 
-          {newAccountName && !isResolving && (
+          {resolvedAccountName && !isResolving && (
             <div className="rounded-xl border border-[#17211b]/10 bg-[#d6f94a]/30 p-3 text-xs font-bold text-[#17211b]">
-              Account Name: {newAccountName}
+              Account Name: {resolvedAccountName}
             </div>
           )}
 
@@ -202,10 +176,14 @@ export function AddAccountModal({
             </button>
             <button
               type="submit"
-              disabled={!newAccountName || isResolving || isSubmitting}
+              disabled={
+                !resolvedAccountName ||
+                isResolving ||
+                createAccountMutation.isPending
+              }
               className="rounded-full bg-[#17211b] px-5 py-2.5 text-xs font-bold text-white transition disabled:opacity-50"
             >
-              {isSubmitting ? 'Saving...' : 'Save & Select'}
+              {createAccountMutation.isPending ? 'Saving...' : 'Save & Select'}
             </button>
           </div>
         </form>

@@ -5,6 +5,7 @@ import { useFieldArray, UseFormReturn } from 'react-hook-form';
 import { Plus, Trash2, Sparkles, Tag, Calendar, RefreshCw } from 'lucide-react';
 import { GadaInput } from '@/components/common/gada-inputs';
 import { EventFormValues } from './schema';
+import { useEventFormStore } from '@/stores/use-event-form-store';
 
 interface Step3Props {
   form: UseFormReturn<EventFormValues>;
@@ -19,6 +20,8 @@ export function Step3Tickets({ form }: Step3Props) {
     formState: { errors },
   } = form;
 
+  const updateFormData = useEventFormStore((state) => state.updateFormData);
+
   const eventType = watch('eventType');
   const isFreeEvent = eventType === 'FREE_EVENT';
 
@@ -26,6 +29,13 @@ export function Step3Tickets({ form }: Step3Props) {
     control,
     name: 'ticketTiers',
   });
+
+  const ticketTiersWatch = watch('ticketTiers');
+  useEffect(() => {
+    if (ticketTiersWatch) {
+      updateFormData({ ticketTiers: ticketTiersWatch });
+    }
+  }, [ticketTiersWatch, updateFormData]);
 
   useEffect(() => {
     if (isFreeEvent) {
@@ -91,20 +101,20 @@ export function Step3Tickets({ form }: Step3Props) {
 
       {!isFreeEvent && (
         <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-[#dce1d5] bg-[#fffef9] p-3">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-[#6d766d] flex items-center gap-1 pr-2 border-r border-[#dce1d5]">
+          <span className="flex items-center gap-1 border-r border-[#dce1d5] pr-2 text-[11px] font-bold uppercase tracking-wider text-[#6d766d]">
             <Tag className="h-3.5 w-3.5 text-[#ff5500]" /> Presets:
           </span>
           <button
             type="button"
             onClick={() => addPresetTier('Early Bird', 5000, 50)}
-            className="rounded-full bg-[#f7f7f2] border border-[#dce1d5] px-3 py-1 text-[11px] font-bold text-[#17211b] hover:border-[#17211b]"
+            className="rounded-full border border-[#dce1d5] bg-[#f7f7f2] px-3 py-1 text-[11px] font-bold text-[#17211b] hover:border-[#17211b]"
           >
             + Early Bird (₦5k)
           </button>
           <button
             type="button"
             onClick={() => addPresetTier('VIP Pass', 20000, 30)}
-            className="rounded-full bg-[#f7f7f2] border border-[#dce1d5] px-3 py-1 text-[11px] font-bold text-[#17211b] hover:border-[#17211b]"
+            className="rounded-full border border-[#dce1d5] bg-[#f7f7f2] px-3 py-1 text-[11px] font-bold text-[#17211b] hover:border-[#17211b]"
           >
             + VIP Pass (₦20k)
           </button>
@@ -113,7 +123,7 @@ export function Step3Tickets({ form }: Step3Props) {
             onClick={() =>
               addPresetTier('3-Day All Access Pass', 45000, 100, true)
             }
-            className="rounded-full bg-[#f7f7f2] border border-[#dce1d5] px-3 py-1 text-[11px] font-bold text-[#17211b] hover:border-[#17211b]"
+            className="rounded-full border border-[#dce1d5] bg-[#f7f7f2] px-3 py-1 text-[11px] font-bold text-[#17211b] hover:border-[#17211b]"
           >
             + 3-Day All Access (₦45k)
           </button>
@@ -185,7 +195,7 @@ export function Step3Tickets({ form }: Step3Props) {
                   />
                   <label
                     htmlFor={`isMultiDay-${index}`}
-                    className="text-xs font-bold text-[#17211b] cursor-pointer flex items-center gap-1.5"
+                    className="flex cursor-pointer items-center gap-1.5 text-xs font-bold text-[#17211b]"
                   >
                     <Calendar className="h-3.5 w-3.5 text-[#ff5500]" />
                     Multi-Day All-Access Pass (Valid across all event dates)
@@ -206,7 +216,7 @@ export function Step3Tickets({ form }: Step3Props) {
                 )}
 
                 <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-semibold text-[#6d766d] flex items-center gap-1">
+                  <span className="flex items-center gap-1 text-[11px] font-semibold text-[#6d766d]">
                     <RefreshCw className="h-3 w-3" /> Max Scans/Day:
                   </span>
                   <input

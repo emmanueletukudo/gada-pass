@@ -1,12 +1,6 @@
 'use client';
 
-import {
-  ArrowLeft,
-  CheckCircle2,
-  Eye,
-  Monitor,
-  Smartphone,
-} from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Monitor, Smartphone } from 'lucide-react';
 
 interface PreviewHeaderProps {
   previewDevice: 'mobile' | 'desktop';
@@ -89,7 +83,7 @@ export function PreviewHeader({
           onClick={onBack}
           className="flex flex-row justify-center items-center rounded-full border border-[#dce1d5] bg-white px-4 py-2.5 text-xs font-bold text-[#17211b] hover:bg-[#f7f7f2]"
         >
-          <ArrowLeft size={15}/> Back
+          <ArrowLeft size={15} /> Back
         </button>
       </div>
     </div>

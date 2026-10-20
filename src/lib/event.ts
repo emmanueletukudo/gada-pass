@@ -236,7 +236,7 @@ export const createSetlementAccounts = async (input: SetlementAccount) => {
   }
 };
 
-export const getSetlementAccounts = async () => {
+export const getOrganiSetlementAccounts = async () => {
   try {
     const res = await api<SetlementAccount[]>('/settlement-accounts/organization', {
       method: 'GET',

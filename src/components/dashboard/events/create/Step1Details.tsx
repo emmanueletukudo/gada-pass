@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { GadaInput } from '@/components/common/gada-inputs';
 import { EventFormValues } from './schema';
+import { useEventFormStore } from '@/stores/use-event-form-store';
 
 interface Step1DetailsProps {
   form: UseFormReturn<EventFormValues>;
@@ -25,6 +26,8 @@ export function Step1Details({ form }: Step1DetailsProps) {
     watch,
     formState: { errors },
   } = form;
+
+  const updateFormData = useEventFormStore((state) => state.updateFormData);
 
   const coverImageUrl = watch('coverImageUrl');
   const description = watch('description') || '';
@@ -58,12 +61,17 @@ export function Step1Details({ form }: Step1DetailsProps) {
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/(^-|-$)+/g, '');
       setValue('slug', generatedSlug, { shouldValidate: true });
+      updateFormData({ slug: generatedSlug, name: title });
+    } else if (title) {
+      updateFormData({ name: title });
     }
-  }, [title, isSlugTouched, setValue]);
+  }, [title, isSlugTouched, setValue, updateFormData]);
 
   const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setIsSlugTouched(true);
-    setValue('slug', e.target.value, { shouldValidate: true });
+    const newSlug = e.target.value;
+    setValue('slug', newSlug, { shouldValidate: true });
+    updateFormData({ slug: newSlug });
   };
 
   const onDrop = (acceptedFiles: File[]) => {
@@ -73,6 +81,7 @@ export function Step1Details({ form }: Step1DetailsProps) {
       setImagePreview(previewUrl);
       setValue('coverImageUrl', previewUrl, { shouldValidate: true });
       setValue('coverImageFiles', [file], { shouldValidate: true });
+      updateFormData({ images: [file], banner: previewUrl });
       toast.success('Cover image staged successfully.');
     }
   };
@@ -88,6 +97,7 @@ export function Step1Details({ form }: Step1DetailsProps) {
     setImagePreview(null);
     setValue('coverImageUrl', '', { shouldValidate: true });
     setValue('coverImageFiles', [], { shouldValidate: true });
+    updateFormData({ images: [], banner: '' });
   };
 
   return (
@@ -110,6 +120,7 @@ export function Step1Details({ form }: Step1DetailsProps) {
 
           {imagePreview ? (
             <div className="relative h-44 w-full overflow-hidden rounded-xl">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={imagePreview}
                 alt="Cover Preview"
@@ -188,9 +199,11 @@ export function Step1Details({ form }: Step1DetailsProps) {
           <input
             type="checkbox"
             checked={coverFees}
-            onChange={(e) =>
-              setValue('coverFees', e.target.checked, { shouldValidate: true })
-            }
+            onChange={(e) => {
+              const checked = e.target.checked;
+              setValue('coverFees', checked, { shouldValidate: true });
+              updateFormData({ coverFees: checked });
+            }}
             className="peer sr-only"
           />
           <div className="peer h-6 w-11 rounded-full bg-[#dce1d5] after:absolute after:left-0.5 after:top-0.5 after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-[#ff5500] peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none" />
@@ -208,10 +221,12 @@ export function Step1Details({ form }: Step1DetailsProps) {
         >
           <MDEditor
             value={description}
-            onChange={(val) =>
-              setValue('description', val || '', { shouldValidate: true })
-            }
-            preview="edit" // Keeps it as a single full-width editor with a formatting toolbar
+            onChange={(val) => {
+              const newDesc = val || '';
+              setValue('description', newDesc, { shouldValidate: true });
+              updateFormData({ description: newDesc });
+            }}
+            preview="edit"
             height={240}
           />
         </div>

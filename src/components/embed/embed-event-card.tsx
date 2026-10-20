@@ -21,7 +21,7 @@ import { GadaInput } from '@/components/common/gada-inputs';
 import { toast } from 'sonner';
 import { useCheckoutStore, Tier } from '@/stores/use-checkout-store';
 import { Logo } from '../logo';
-import { formatDate, formatDateRange } from '@/utils/helpers';
+import { formatDate } from '@/utils/helpers';
 
 const guestCheckoutSchema = z.object({
   fullName: z.string().min(2, 'Full name must be at least 2 characters'),
@@ -84,15 +84,6 @@ export default function EmbedEventCard({ event }: EmbedEventProps) {
   const platformFee = getPlatformFee();
   const total = getTotal();
   const currencySymbol = getCurrencySymbol();
-
-  const formattedDate = new Date(event.startsAt).toLocaleDateString('en-US', {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-
   const foramtedStartDate = formatDate(event.startsAt);
   const formatedEndDate = formatDate(event.endsAt);
 
@@ -195,7 +186,7 @@ export default function EmbedEventCard({ event }: EmbedEventProps) {
             fill
             className="object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+          <div className="absolute inset-0 bg-linear-to-t from-black/70 via-black/20 to-transparent" />
           <div className="absolute bottom-3 left-4 right-4 inline-flex items-center gap-2">
             <span className="inline-block rounded-full bg-[#d6f94a] px-3 py-1 text-[10px] font-black uppercase text-[#17211b]">
               Hosted by {event.organizer.hostName}

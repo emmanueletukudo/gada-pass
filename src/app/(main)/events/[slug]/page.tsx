@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { api, eventCover, mediaUrl, type ApiEvent } from '@/lib/api';
+import {  useState, use } from 'react';
+import { eventCover, mediaUrl } from '@/lib/api';
+import { useEvent } from '@/lib/hooks-new/useEvents';
 import { ArrowUpRight, Building2 } from 'lucide-react';
 import { TicketCheckout } from '@/components/ticket-checkout';
 import { formatDate, SHORT_DATE_FORMAT } from '@/utils/helpers';
@@ -54,34 +55,21 @@ export default function EventPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  const [event, setEvent] = useState<ApiEvent | null>(null);
-  const [error, setError] = useState('');
-  const [slug, setSlug] = useState('');
+  const { slug } = use(params);
+  const { data: event, isLoading, error: queryError } = useEvent(slug);
+
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>('About');
 
-  useEffect(() => {
-    void params.then(({ slug: nextSlug }) => setSlug(nextSlug));
-  }, [params]);
-
-  useEffect(() => {
-    if (!slug) return;
-    void api<ApiEvent>(`/events/${slug}`)
-      .then(setEvent)
-      .catch((reason: unknown) =>
-        setError(
-          reason instanceof Error
-            ? reason.message
-            : 'Event could not be loaded',
-        ),
-      );
-  }, [slug]);
-
-  if (error)
+  if (queryError)
     return (
       <main className="grid min-h-screen place-items-center px-5 text-center">
         <div>
-          <p className="text-sm font-bold text-[#c34837]">{error}</p>
+          <p className="text-sm font-bold text-[#c34837]">
+            {queryError instanceof Error
+              ? queryError.message
+              : 'Event could not be loaded'}
+          </p>
           <Link
             href="/events"
             className="mt-5 inline-block font-bold underline"
@@ -92,7 +80,7 @@ export default function EventPage({
       </main>
     );
 
-  if (!event)
+  if (isLoading || !event)
     return (
       <div className="min-h-screen">
         <main className="mx-auto max-w-7xl px-4 pb-20 pt-4 sm:px-6 sm:pt-6 md:px-10">
@@ -132,8 +120,8 @@ export default function EventPage({
 
   const cover = eventCover(event);
   const gallery = (event.images ?? [])
-    .map((image) => mediaUrl(image))
-    .filter((image) => image && image !== cover);
+    .map((image: string) => mediaUrl(image))
+    .filter((image: string) => image && image !== cover);
 
   const hostName = event.organizer?.hostName || 'Event Host';
   const hostInitials = hostName
@@ -340,7 +328,7 @@ export default function EventPage({
               </div>
             )}
           </div>
-          
+
           <aside
             id="tickets"
             className={`h-fit min-w-0 scroll-mt-6 rounded-3xl border border-[#dce1d5] bg-white p-4 transition sm:p-6 lg:sticky lg:top-6 ${

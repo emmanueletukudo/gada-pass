@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowUpRight, Copy, ExternalLink, PartyPopper, Trophy } from 'lucide-react';
+import { ArrowUpRight, Copy, PartyPopper } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface PublishSuccessModalProps {

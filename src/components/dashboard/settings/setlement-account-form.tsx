@@ -1,5 +1,4 @@
 import { BankOption, BankSelect } from '@/components/common/BankSelect';
-import { ChevronDown } from 'lucide-react';
 import { Control, Controller } from 'react-hook-form';
 
 type FormValues = {
