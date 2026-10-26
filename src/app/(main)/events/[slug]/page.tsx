@@ -213,6 +213,7 @@ export default function EventPage({
                     {event.organizer?.logoUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
+                        key={event.organizer?.logoUrl ?? event.id}
                         src={mediaUrl(event.organizer.logoUrl)}
                         alt={hostName}
                         className="h-full w-full object-contain"

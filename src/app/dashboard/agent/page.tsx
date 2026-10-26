@@ -38,7 +38,7 @@ import {
   getPendingSyncCount,
   CachedTicket,
 } from '@/lib/offline-db';
-import { syncOfflineOutbox } from '@/lib/sync-manager';
+
 import { AgentScannerSkeleton } from '@/components/dashboard/agent/skeletons/loading-skeleton';
 import {
   useAssignedEvents,
@@ -47,6 +47,7 @@ import {
   CheckInResult,
 } from '@/lib/hooks-new/useAgentEvents';
 import { api } from '@/lib/api';
+import { useSyncOfflineOutbox } from '@/lib/hooks-new/useSyncManager';
 
 const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000;
 const DUPLICATE_SCAN_WINDOW_MS = 4000;
@@ -136,6 +137,7 @@ export default function AgentScannerPage() {
     at: Date;
   } | null>(null);
   const [pendingCount, setPendingCount] = useState(0);
+  const syncMutation = useSyncOfflineOutbox();
 
   const [manualTicketId, setManualTicketId] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
@@ -277,7 +279,7 @@ export default function AgentScannerPage() {
     if (syncingRef.current) return;
     syncingRef.current = true;
     try {
-      await syncOfflineOutbox();
+      await useSyncOfflineOutbox();
     } catch (err) {
       console.error('Outbox sync failed:', err);
     } finally {
@@ -347,6 +349,7 @@ export default function AgentScannerPage() {
               qrPayload,
               eventId: selectedEventId,
               mode: scanMode,
+              checkedInAt: new Date().toISOString(),
             });
 
           let result: Awaited<ReturnType<typeof attempt>>;
@@ -978,7 +981,6 @@ export default function AgentScannerPage() {
   );
 }
 
-/* ---------- result panel ---------- */
 
 function ResultPanel({
   result,

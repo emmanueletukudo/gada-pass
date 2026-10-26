@@ -10,8 +10,9 @@ export interface CachedTicket {
 }
 
 export interface OutboxItem {
-  id?: number; 
+  id?: number;
   ticketId: string;
+  mode: 'IN' | 'OUT';
   eventId: string;
   timestamp: string;
 }
@@ -46,11 +47,16 @@ export async function initOfflineDB() {
   });
 }
 
-export async function queueOfflineCheckIn(ticketId: string, eventId: string, scanMod: 'IN' | "OUT") {
+export async function queueOfflineCheckIn(
+  ticketId: string,
+  eventId: string,
+  scanMode: 'IN' | 'OUT', 
+) {
   const db = await initOfflineDB();
   await db.add('outbox', {
     ticketId,
     eventId,
+    mode: scanMode,
     timestamp: new Date().toISOString(),
   });
 }

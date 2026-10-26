@@ -70,6 +70,7 @@ export function useCheckInMutation() {
       qrPayload: string;
       eventId: string;
       mode: 'IN' | 'OUT';
+      checkedInAt: string,
     }) =>
       api<CheckInResult>('/events/check-in', {
         method: 'POST',
