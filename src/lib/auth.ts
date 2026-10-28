@@ -1,5 +1,5 @@
 import { UserRole } from '@/types/next-auth';
-import { api } from './api';
+import { api } from './hooks-new/api';
 
 export type Role = 'ATTENDEE' | 'ORGANIZER' | 'GATE_AGENT' | 'ADMIN';
 export type User = {
@@ -40,9 +40,6 @@ export async function register(values: {
     method: 'POST',
     body: JSON.stringify(values),
   });
-  localStorage.setItem('eventsgada_token', result.accessToken);
-  if (result.user)
-    localStorage.setItem('eventsgada_user', JSON.stringify(result.user));
   return result;
 }
 
@@ -55,7 +52,6 @@ export async function uploadHostLogoDirect(file: File): Promise<string> {
     method: 'POST',
     body: JSON.stringify({ contentType: file.type }),
   });
-
 
   const uploadResponse = await fetch(uploadUrl, {
     method: 'PUT',

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { API_URL } from "../api";
+import { API_URL } from "../hooks-new/api";
 
 interface UploadResponse {
   uploadUrl: string;

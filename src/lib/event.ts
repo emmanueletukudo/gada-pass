@@ -86,8 +86,8 @@ export type verifyBankAccountReponse = {
 
 export const createEvent = async (input: CreateEventInput) => {
   try {
+    console.log('Submitting event with values:', input);
     let uploadedUrls: string[] = [];
-
     if (input.images && input.images.length > 0) {
       uploadedUrls = await Promise.all(
         input.images.map((file) => uploadFileToR2(file)),

@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from './useApi';
+import { api } from './api';
 
 interface UpdateProfilePayload {
   firstName: string;

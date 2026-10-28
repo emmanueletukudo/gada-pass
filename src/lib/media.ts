@@ -1,4 +1,5 @@
-import { api } from "./api";
+import { api } from "./hooks-new/api";
+
 
 export const uploadFileToR2 = async (file: File): Promise<string> => {
   const { uploadUrl, publicUrl } = await api<{

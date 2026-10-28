@@ -6,9 +6,9 @@ import {
   markTicketCheckedInOffline,
 } from '../offline-db';
 
-import { api } from './useApi';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { api } from './api';
 
 export function useSyncOfflineOutbox() {
   const queryClient = useQueryClient();

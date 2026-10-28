@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from './useApi';
+
 import { updateEvent } from '@/lib/event';
+import { api } from './api';
 
 export function useEventDetail(eventId: string) {
   return useQuery({

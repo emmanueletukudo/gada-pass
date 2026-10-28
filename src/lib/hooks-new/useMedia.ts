@@ -1,8 +1,8 @@
 'use client';
 
-import { api } from './useApi';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { api } from './api';
 
 
 export function useUploadFile() {

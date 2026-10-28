@@ -1,10 +1,10 @@
 'use client';
 
 import { toast } from 'sonner';
-import { api, ApiEvent } from './useApi';
-import { uploadFileToR2 } from '../media';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEventFiltersStore } from '@/stores/use-event-filters-store';
+import { uploadFileFn } from './helper';
+import { api, ApiEvent } from './api';
 
 export interface CreateTicketTierInput {
   id?: string;
@@ -19,7 +19,6 @@ export interface CreateTicketTierInput {
   salesStart?: string;
   salesEnd?: string;
 }
-
 
 export interface CreateEventInput {
   name: string;
@@ -99,7 +98,6 @@ export function useEventCategories() {
   });
 }
 
-
 export function useSupportedBanks() {
   return useQuery({
     queryKey: ['supported-banks'],
@@ -133,23 +131,36 @@ export function useCreateEvent() {
       let uploadedUrls: string[] = [];
       if (input.images && input.images.length > 0) {
         uploadedUrls = await Promise.all(
-          input.images.map((file) => uploadFileToR2(file)),
+          input.images.map((file) => uploadFileFn(file)),
         );
       }
 
       return api<{ id: string }>('/events', {
         method: 'POST',
         body: JSON.stringify({
-          ...input,
+          name: input.name,
+          description: input.description,
+          eventType: input.eventType,
+          slug: input.slug || undefined,
+          coverFees: input.coverFees ?? false,
+          categoryId: input.categoryId || undefined,
+          city: input.city || undefined,
+          venue: input.venue || undefined,
           startsAt: new Date(input.startsAt).toISOString(),
           endsAt: new Date(input.endsAt).toISOString(),
           capacity: Number(input.capacity ?? 100),
-          coverFees: input.coverFees ?? false,
           isOnline: input.isOnline ?? false,
+          meetingLink: input.meetingLink || undefined,
+          virtualPlatform: input.virtualPlatform || undefined,
+          meetingPasscode: input.meetingPasscode || undefined,
+          settlementAccountId: input.settlementAccountId || undefined,
+          instagram: input.instagram || undefined,
+          x: input.x || undefined,
+          website: input.website || undefined,
           images: uploadedUrls,
           banner: uploadedUrls[0] ?? input.banner,
           ticketTiers: input.ticketTiers.map((tier) => ({
-            ...tier,
+            name: tier.name,
             price: String(tier.price),
             quantity: Number(tier.quantity),
             currency: tier.currency ?? 'NGN',
@@ -157,6 +168,7 @@ export function useCreateEvent() {
             maxScansPerDay: tier.maxScansPerDay
               ? Number(tier.maxScansPerDay)
               : 1,
+            validDate: tier.validDate || undefined,
           })),
         }),
       });
@@ -184,22 +196,36 @@ export function useUpdateEvent() {
       let imageUrls: string[] = [];
       if (input.images && input.images.length > 0) {
         imageUrls = await Promise.all(
-          input.images.map((file) => uploadFileToR2(file)),
+          input.images.map((file) => uploadFileFn(file)),
         );
       }
 
       return api<CreateEventResponse>(`/organizer/events/${eventId}/update`, {
         method: 'PATCH',
         body: JSON.stringify({
-          ...input,
+          name: input.name,
+          description: input.description,
+          eventType: input.eventType,
+          city: input.city,
+          categoryId: input.categoryId,
+          coverFees: input.coverFees ?? false,
+          venue: input.venue,
           startsAt: new Date(input.startsAt).toISOString(),
           endsAt: new Date(input.endsAt).toISOString(),
-          coverFees: input.coverFees ?? false,
           isOnline: input.isOnline ?? false,
+          meetingLink: input.meetingLink || undefined,
+          virtualPlatform: input.virtualPlatform || undefined,
+          meetingPasscode: input.meetingPasscode || undefined,
+          capacity: input.capacity,
+          settlementAccountId: input.settlementAccountId || undefined,
+          instagram: input.instagram || undefined,
+          x: input.x || undefined,
+          website: input.website || undefined,
           images: imageUrls,
           banner: imageUrls[0] ?? input.banner,
           ticketTiers: input.ticketTiers.map((tier) => ({
-            ...tier,
+            id: tier.id,
+            name: tier.name,
             price: String(tier.price),
             quantity: Number(tier.quantity),
             currency: tier.currency ?? 'NGN',
@@ -207,6 +233,7 @@ export function useUpdateEvent() {
             maxScansPerDay: tier.maxScansPerDay
               ? Number(tier.maxScansPerDay)
               : 1,
+            validDate: tier.validDate || undefined,
           })),
         }),
       });
@@ -293,7 +320,6 @@ export function useEvents() {
       : queryError
         ? 'Events could not be loaded'
         : '';
-
 
   const loading = isPending || isLoading;
 

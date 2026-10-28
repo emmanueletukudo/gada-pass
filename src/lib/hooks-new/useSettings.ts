@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from './useApi';
 import { toast } from 'sonner';
+import { api } from './api';
 
 export function useUpdateLogoMutation() {
   const queryClient = useQueryClient();

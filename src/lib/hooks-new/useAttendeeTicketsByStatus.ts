@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { api } from './useApi';
+import { api } from './api';
 
 export interface AttendeeTicket {
   id: string;

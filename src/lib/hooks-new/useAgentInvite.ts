@@ -1,5 +1,5 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { api } from './useApi';
+import { api } from './api';
 
 export type InviteInfo = {
   email: string;

@@ -4,13 +4,13 @@ export const API_URL =
   process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080/api/v1';
 
 type EventCategoryResponse = {
-  id:  string
-  slug: string
-  name: string
-  description: string
-  iconUrl: string
-  isActive: boolean
-  displayOrder: number
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  iconUrl: string;
+  isActive: boolean;
+  displayOrder: number;
 };
 
 export type ApiEvent = {
@@ -77,12 +77,7 @@ export async function api<T>(path: string, options: RequestInit = {}) {
       });
     }
 
-    throw new Error(`Session enpried. Redirecting to login.`)
+    throw new Error(`Session enpried. Redirecting to login.`);
   }
-
-  const body = await response.json().catch(() => null);
-  if (!response.ok) throw new Error(body?.message ?? 'Something went wrong');
-  return body as T;
 }
-
 export const apiUrl = API_URL;

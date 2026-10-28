@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from './useApi';
+import { api } from './api';
 
 export interface SupportInquiry {
   id: string;

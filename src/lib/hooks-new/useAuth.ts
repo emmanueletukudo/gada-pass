@@ -1,8 +1,8 @@
 'use client';
 
-import { api } from './useApi';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { api } from './api';
 
 export type Role = 'ATTENDEE' | 'ORGANIZER' | 'GATE_AGENT' | 'ADMIN';
 
@@ -40,6 +40,15 @@ export interface OnboardingPayload {
   accountType: 'INDIVIDUAL' | 'ORGANIZATION';
 }
 
+export interface ForgotPasswordInput {
+  email: string;
+}
+
+export interface ResetPasswordInput {
+  email: string;
+  token: string;
+  newPassword: string;
+}
 
 export function getDashboardPathForRole(role?: Role | string): string {
   switch (role) {
@@ -192,6 +201,50 @@ export function useCompleteOnboarding() {
         error instanceof Error
           ? error.message
           : 'Unable to complete onboarding';
+      toast.error(message);
+    },
+  });
+}
+
+export function useForgotPassword() {
+  return useMutation({
+    mutationFn: async ({ email }: ForgotPasswordInput) => {
+      return api<{ message: string }>('/auth/forgot-password', {
+        method: 'POST',
+        body: JSON.stringify({ email }),
+      });
+    },
+    onSuccess: () => {
+      toast.success(
+        'If the email exists, a password reset code has been sent.',
+      );
+    },
+    onError: (error: any) => {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Failed to send password reset code';
+      toast.error(message);
+    },
+  });
+}
+
+export function useResetPassword() {
+  return useMutation({
+    mutationFn: async (values: ResetPasswordInput) => {
+      return api<{ message: string }>('/auth/reset-password', {
+        method: 'POST',
+        body: JSON.stringify(values),
+      });
+    },
+    onSuccess: () => {
+      toast.success(
+        'Password has been reset successfully. You can now log in.',
+      );
+    },
+    onError: (error: any) => {
+      const message =
+        error instanceof Error ? error.message : 'Failed to reset password';
       toast.error(message);
     },
   });

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { api, ApiEvent } from '../api';
+import { api, ApiEvent } from '../hooks-new/api';
 
 export const categories = ['All', 'Community', 'Social', 'Concert', 'Food & Drink'];
 

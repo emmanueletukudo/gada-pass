@@ -1,9 +1,9 @@
 'use client';
 
 import { del, get, set } from 'idb-keyval';
-import { api } from './useApi';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { api } from './api';
 
 export type OfflineScan = {
   ticketCode: string;

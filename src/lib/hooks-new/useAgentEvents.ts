@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from './useApi';
+import { api } from './api';
 
 export type AssignedEvent = {
   id: string;
@@ -70,7 +70,8 @@ export function useCheckInMutation() {
       qrPayload: string;
       eventId: string;
       mode: 'IN' | 'OUT';
-      checkedInAt: string,
+      isOfflineSync: boolean;
+      checkedInAt: string;
     }) =>
       api<CheckInResult>('/events/check-in', {
         method: 'POST',

@@ -1,8 +1,8 @@
 import { useSession } from 'next-auth/react';
-import { api } from '@/lib/api';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { User } from 'next-auth';
+import { api } from '../hooks-new/api';
 
 export function useCompleteOnboarding() {
   const { update } = useSession();
