@@ -70,7 +70,6 @@ function timeAgo(iso?: string) {
   return new Date(iso).toLocaleDateString();
 }
 
-/* ---------- small UI pieces ---------- */
 
 function Avatar({ label, muted = false }: { label: string; muted?: boolean }) {
   return (

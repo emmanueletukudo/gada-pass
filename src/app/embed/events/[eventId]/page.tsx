@@ -1,9 +1,10 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { api } from '@/lib/api';
+
 import EmbedEventCard, {
   EmbedEventProps,
 } from '@/components/embed/embed-event-card';
+import { api } from '@/lib/hooks-new/api';
 
 interface PageProps {
   params: Promise<{ eventId: string }>;
@@ -11,7 +12,8 @@ interface PageProps {
 
 async function fetchEventData(eventId: string) {
   try {
-    return await api<EmbedEventProps['event']>(`/events/${eventId}`);
+     const res = await api<EmbedEventProps['event']>(`/events/${eventId}`);
+     return res;
   } catch (error) {
     console.error(`Failed to fetch embed event data for ID: ${eventId}`, error);
     return null;
@@ -31,7 +33,7 @@ export async function generateMetadata({
   }
 
   return {
-    title: `${event.name} - Get Tickets | Gada Pass`,
+    title: `${event.name} | Get Tickets | Gada Pass`,
     description: `Get tickets for ${event.name} hosted by ${event.organizer?.hostName || 'Gada Organizers'}.`,
     robots: { index: false, follow: false },
   };

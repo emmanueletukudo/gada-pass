@@ -2,7 +2,7 @@
 
 import { useOrganizerEvents } from '@/lib/hooks-new/useOrganizerEvents';
 import Link from 'next/link';
-import { Plus, Calendar, Ticket, ChevronRight } from 'lucide-react';
+import { Plus, Calendar, Ticket, ChevronRight, Archive } from 'lucide-react';
 import { OrganizerEventsSkeleton } from '@/components/dashboard/common/organizer-events-skeleton';
 
 export default function OrganizerEventsPage() {
@@ -17,13 +17,23 @@ export default function OrganizerEventsPage() {
             Create, update, and monitor your event performance.
           </p>
         </div>
-        <Link
-          href="/dashboard/organizer/events/create"
-          className="inline-flex items-center gap-2 rounded-full bg-[#17211b] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#25332b]"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Create new event</span>
-        </Link>
+        <div className="gap-2 inline-flex">
+          <Link
+            href="/dashboard/organizer/events/create"
+            className="inline-flex items-center gap-2 rounded-full bg-[#17211b] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#25332b]"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Create new event</span>
+          </Link>
+
+          <Link
+            href="/dashboard/organizer/events/archive"
+            className="inline-flex items-center gap-2 rounded-full bg-[#ff765f] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#fc5a3e]"
+          >
+            <Archive className="h-4 w-4" />
+            <span>Past Events</span>
+          </Link>
+        </div>
       </div>
 
       {isLoading ? (

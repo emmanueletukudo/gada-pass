@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { api } from '@/lib/api';
 import { queueOfflineCheckIn, getPendingSyncCount } from '@/lib/offline-db';
 import { syncOfflineOutbox } from '@/lib/sync-manager';
 import {
@@ -11,6 +10,7 @@ import {
   Camera,
   RefreshCw,
 } from 'lucide-react';
+import { api } from '@/lib/hooks-new/api';
 
 type ScanStatus = 'idle' | 'success' | 'error' | 'queued' | 'syncing';
 

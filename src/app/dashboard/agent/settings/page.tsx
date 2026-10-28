@@ -5,13 +5,13 @@ import { toast } from 'sonner';
 import { Wifi, WifiOff, RefreshCw, CheckCircle2, XCircle } from 'lucide-react';
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
 import { useAssignedEvents } from '@/lib/hooks-new/useAgentEvents';
-import { api } from '@/lib/api';
 import {
   saveManifestToCache,
   getPendingSyncCount,
   CachedTicket,
 } from '@/lib/offline-db';
 import { syncOfflineOutbox } from '@/lib/sync-manager';
+import { api } from '@/lib/hooks-new/api';
 
 interface AttendeeRecord {
   ticketId: string;

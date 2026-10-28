@@ -58,7 +58,6 @@ export const ROLE_NAV_ITEMS: Record<string, NavItem[]> = {
     },
   ],
 
-
   attendee: [
     {
       label: 'Overview',
@@ -76,7 +75,6 @@ export const ROLE_NAV_ITEMS: Record<string, NavItem[]> = {
       icon: <Settings className="h-4 w-4" />,
     },
   ],
-
 
   admin: [
     {

@@ -16,12 +16,12 @@ import {
   MapPin,
   ExternalLink,
 } from 'lucide-react';
-import { api } from '@/lib/api';
 import { GadaInput } from '@/components/common/gada-inputs';
 import { toast } from 'sonner';
 import { useCheckoutStore, Tier } from '@/stores/use-checkout-store';
 import { Logo } from '../logo';
 import { formatDate } from '@/utils/helpers';
+import { api } from '@/lib/hooks-new/api';
 
 const guestCheckoutSchema = z.object({
   fullName: z.string().min(2, 'Full name must be at least 2 characters'),
@@ -77,8 +77,6 @@ export default function EmbedEventCard({ event }: EmbedEventProps) {
   useEffect(() => {
     initCheckout(event.id, event.ticketTiers || []);
   }, [event, initCheckout]);
-
-  console.log(event);
 
   const activeSelections = getActiveSelections();
   const platformFee = getPlatformFee();

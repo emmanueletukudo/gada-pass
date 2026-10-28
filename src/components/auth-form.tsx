@@ -10,8 +10,9 @@ import {
   useRegister,
   useSendOtp,
   useVerifyOtp,
+  useForgotPassword,
+  useResetPassword,
 } from '@/lib/hooks-new/useAuth';
-
 
 import { GadaInput } from './common/gada-inputs';
 import { toast } from 'sonner';
@@ -20,11 +21,14 @@ import { UserRole } from '@/types/next-auth';
 import { ArrowLeft, Info, Loader2 } from 'lucide-react';
 import { OtpInput } from './common/otp-input';
 
-const getSchema = (mode: 'login' | 'register', step: number) => {
+const getSchema = (mode: 'login' | 'register' | 'forgot-password' | 'reset-password', step: number) => {
   return z
     .object({
       email: z.string().email('Please enter a valid email address'),
-      password: z.string().min(8, 'Password must be at least 8 characters'),
+      password: mode === 'login' ? z.string().min(1, 'Password is required') : z.string().min(8, 'Password must be at least 8 characters'),
+      newPassword: mode === 'reset-password' ? z.string().min(8, 'Password must be at least 8 characters') : z.string().optional(),
+      confirmNewPassword: mode === 'reset-password' ? z.string().min(1, 'Please confirm your new password') : z.string().optional(),
+      resetToken: mode === 'reset-password' ? z.string().min(6, 'Reset code is required') : z.string().optional(),
       otp: z.string().optional(),
       accountType: z.enum(['INDIVIDUAL', 'ORGANIZATION']).optional(),
       firstName:
@@ -54,26 +58,32 @@ const getSchema = (mode: 'login' | 'register', step: number) => {
         if (mode === 'register' && step >= 4) {
           return data.password === data.confirmPassword;
         }
+        if (mode === 'reset-password') {
+          return data.newPassword === data.confirmNewPassword;
+        }
         return true;
       },
       {
         message: 'Passwords did not match!',
-        path: ['confirmPassword'],
+        path: mode === 'reset-password' ? ['confirmNewPassword'] : ['confirmPassword'],
       },
     );
 };
 
 type Values = z.infer<ReturnType<typeof getSchema>>;
 
-export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
+export function AuthForm({ mode: initialMode }: { mode: 'login' | 'register' }) {
   const router = useRouter();
   const { data: session, status } = useSession();
+  const [authMode, setAuthMode] = useState<'login' | 'register' | 'forgot-password' | 'reset-password'>(initialMode);
   const [step, setStep] = useState<number>(1);
   const [isGoogleLoading, setIsGoogleLoading] = useState<boolean>(false);
 
   const sendOtpMutation = useSendOtp();
   const verifyOtpMutation = useVerifyOtp();
   const registerMutation = useRegister();
+  const forgotPasswordMutation = useForgotPassword();
+  const resetPasswordMutation = useResetPassword();
 
   const {
     register: field,
@@ -84,11 +94,14 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
     setValue,
     trigger,
   } = useForm<Values>({
-    resolver: zodResolver(getSchema(mode, step)),
+    resolver: zodResolver(getSchema(authMode, step)),
     defaultValues: {
       email: '',
       password: '',
       confirmPassword: '',
+      newPassword: '',
+      confirmNewPassword: '',
+      resetToken: '',
       otp: '',
       accountType: 'INDIVIDUAL',
       firstName: '',
@@ -180,9 +193,58 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
     }
   };
 
+  const handleForgotPasswordSubmit = async () => {
+    const isEmailValid = await trigger('email');
+    const email = watch('email');
+    if (!isEmailValid || !email) {
+      toast.error('Please enter a valid email address.');
+      return;
+    }
+
+    forgotPasswordMutation.mutate(
+      { email },
+      {
+        onSuccess: () => {
+          setAuthMode('reset-password');
+        },
+      },
+    );
+  };
+
+  const handleResetPasswordSubmit = async (values: Values) => {
+    if (values.newPassword !== values.confirmNewPassword) {
+      setError('confirmNewPassword', { message: 'Passwords did not match!' });
+      return;
+    }
+
+    resetPasswordMutation.mutate(
+      {
+        email: values.email,
+        token: values.resetToken || '',
+        newPassword: values.newPassword || '',
+      },
+      {
+        onSuccess: () => {
+          setAuthMode('login');
+          router.push('/auth/login');
+        },
+      },
+    );
+  };
+
   const submit = async (values: Values) => {
+    if (authMode === 'forgot-password') {
+      await handleForgotPasswordSubmit();
+      return;
+    }
+
+    if (authMode === 'reset-password') {
+      await handleResetPasswordSubmit(values);
+      return;
+    }
+
     try {
-      if (mode === 'login') {
+      if (authMode === 'login') {
         const result = await signIn('credentials', {
           email: values.email,
           password: values.password,
@@ -262,11 +324,13 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
   const isMutationPending =
     sendOtpMutation.isPending ||
     verifyOtpMutation.isPending ||
-    registerMutation.isPending;
+    registerMutation.isPending ||
+    forgotPasswordMutation.isPending ||
+    resetPasswordMutation.isPending;
 
   return (
     <form onSubmit={handleSubmit(submit)} className="space-y-4">
-      {mode === 'register' && (
+      {authMode === 'register' && (
         <>
           {step === 1 && (
             <div className="space-y-4">
@@ -544,7 +608,7 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
         </>
       )}
 
-      {mode === 'login' && (
+      {authMode === 'login' && (
         <div className="space-y-4">
           <GadaInput
             register={field}
@@ -556,15 +620,26 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
             error={errors.email?.message}
           />
 
-          <GadaInput
-            register={field}
-            name="password"
-            type="password"
-            placeHolder="Password"
-            required
-            label="Password"
-            error={errors.password?.message}
-          />
+          <div className="space-y-1">
+            <GadaInput
+              register={field}
+              name="password"
+              type="password"
+              placeHolder="Password"
+              required
+              label="Password"
+              error={errors.password?.message}
+            />
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setAuthMode('forgot-password')}
+                className="text-xs font-semibold text-[#17211b] hover:underline"
+              >
+                Forgot Password?
+              </button>
+            </div>
+          </div>
 
           <button
             disabled={isSubmitting}
@@ -609,6 +684,118 @@ export function AuthForm({ mode }: { mode: 'login' | 'register' }) {
                 </svg>
                 <span>Continue with Google</span>
               </>
+            )}
+          </button>
+        </div>
+      )}
+
+      {authMode === 'forgot-password' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => setAuthMode('login')}
+              className="inline-flex items-center gap-1 text-xs font-bold text-[#6d766d] hover:text-[#17211b]"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" /> Back to Login
+            </button>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-bold text-[#17211b]">Reset Password</h3>
+            <p className="mt-0.5 text-xs text-[#6d766d]">
+              Enter your email address and we&apos;ll send you a password reset code.
+            </p>
+          </div>
+
+          <GadaInput
+            register={field}
+            name="email"
+            type="email"
+            placeHolder="Email Address"
+            required
+            label="Email Address"
+            error={errors.email?.message}
+          />
+
+          <button
+            type="button"
+            disabled={forgotPasswordMutation.isPending}
+            onClick={handleForgotPasswordSubmit}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#17211b] py-4 font-bold text-white transition hover:bg-[#25332b] disabled:opacity-50"
+          >
+            {forgotPasswordMutation.isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin text-[#d6f94a]" />
+                <span>Sending Code...</span>
+              </>
+            ) : (
+              <span>Send Reset Code</span>
+            )}
+          </button>
+        </div>
+      )}
+
+      {authMode === 'reset-password' && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => setAuthMode('forgot-password')}
+              className="inline-flex items-center gap-1 text-xs font-bold text-[#6d766d] hover:text-[#17211b]"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" /> Back
+            </button>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-bold text-[#17211b]">Create New Password</h3>
+            <p className="mt-0.5 text-xs text-[#6d766d]">
+              Enter the reset code sent to your email and your new password.
+            </p>
+          </div>
+
+          <GadaInput
+            register={field}
+            name="resetToken"
+            type="text"
+            placeHolder="6-digit Reset Code"
+            required
+            label="Reset Code"
+            error={errors.resetToken?.message}
+          />
+
+          <GadaInput
+            register={field}
+            name="newPassword"
+            type="password"
+            placeHolder="New Password"
+            required
+            label="New Password"
+            error={errors.newPassword?.message}
+          />
+
+          <GadaInput
+            register={field}
+            name="confirmNewPassword"
+            type="password"
+            placeHolder="Confirm New Password"
+            required
+            label="Confirm New Password"
+            error={errors.confirmNewPassword?.message}
+          />
+
+          <button
+            disabled={resetPasswordMutation.isPending || isSubmitting}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#17211b] py-4 font-bold text-white transition hover:bg-[#25332b] disabled:opacity-50"
+          >
+            {resetPasswordMutation.isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin text-[#d6f94a]" />
+                <span>Resetting Password...</span>
+              </>
+            ) : (
+              <span>Reset Password</span>
             )}
           </button>
         </div>

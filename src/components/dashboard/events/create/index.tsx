@@ -94,8 +94,7 @@ export default function CreateEventMultiStepPage() {
     try {
       const imageFiles: File[] = values.coverImageFiles ?? [];
 
-      const createdEvent = await createEventMutation.mutateAsync(
-        cleanPayload({
+      const createdEvent = await createEventMutation.mutateAsync({
         name: values.title,
         description: values.description,
         categoryId: values.categoryId as string,
@@ -120,7 +119,7 @@ export default function CreateEventMultiStepPage() {
         slug: values.slug,
         coverFees: values.coverFees,
         eventType: values.eventType,
-      }));
+      });
 
       if (createdEvent?.id) {
         await publishEventMutation.mutateAsync(createdEvent.id);

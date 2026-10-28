@@ -46,8 +46,8 @@ import {
   useCheckInMutation,
   CheckInResult,
 } from '@/lib/hooks-new/useAgentEvents';
-import { api } from '@/lib/api';
 import { useSyncOfflineOutbox } from '@/lib/hooks-new/useSyncManager';
+import { api } from '@/lib/hooks-new/api';
 
 const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000;
 const DUPLICATE_SCAN_WINDOW_MS = 4000;
@@ -349,6 +349,7 @@ export default function AgentScannerPage() {
               qrPayload,
               eventId: selectedEventId,
               mode: scanMode,
+              isOfflineSync: false,
               checkedInAt: new Date().toISOString(),
             });
 

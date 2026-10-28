@@ -14,12 +14,12 @@ import {
   Zap,
   Calendar,
 } from 'lucide-react';
-import { api } from '@/lib/api';
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
 import { GadaInput } from './common/gada-inputs';
 import { toast } from 'sonner';
 
 import { useCheckoutStore, Tier } from '@/stores/use-checkout-store';
+import { api } from '@/lib/hooks-new/api';
 
 const guestCheckoutSchema = z.object({
   fullName: z.string().min(2, 'Full name must be at least 2 characters'),

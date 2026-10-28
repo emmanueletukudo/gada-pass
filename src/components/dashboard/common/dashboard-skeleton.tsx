@@ -3,7 +3,7 @@
 export function DashboardSkeleton() {
   return (
     <div className="min-h-screen bg-[#fffef9]">
-      <aside className="fixed bottom-0 left-0 top-0 hidden w-64 flex-col justify-between border-r border-[#dce1d5] bg-[#fffef9] p-6 lg:flex animate-pulse z-20">
+      {/* <aside className="fixed bottom-0 left-0 top-0 hidden w-64 flex-col justify-between border-r border-[#dce1d5] bg-[#fffef9] p-6 lg:flex animate-pulse z-20">
         <div className="space-y-8">
           <div className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-xl bg-[#dce1d5]" />
@@ -35,7 +35,7 @@ export function DashboardSkeleton() {
 
           <div className="h-12 w-full rounded-xl border border-[#dce1d5] bg-[#dce1d5]/30" />
         </div>
-      </aside>
+      </aside> */}
 
       <main className="w-full lg:pl-64">
         <div className="w-full space-y-6 p-4 sm:p-6 md:p-8 animate-pulse">
