@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -19,6 +18,7 @@ import { EventPreviewStep } from '../preview';
 import { useEventFormStore } from '@/stores/use-event-form-store';
 import { useCreateEvent, usePublishEvent } from '@/lib/hooks-new/useEvents';
 import { EVENT_TYPES } from './types';
+import { cleanPayload } from '@/utils/helpers';
 
 const STEP_LABELS = [
   'Event Type',
@@ -94,7 +94,8 @@ export default function CreateEventMultiStepPage() {
     try {
       const imageFiles: File[] = values.coverImageFiles ?? [];
 
-      const createdEvent = await createEventMutation.mutateAsync({
+      const createdEvent = await createEventMutation.mutateAsync(
+        cleanPayload({
         name: values.title,
         description: values.description,
         categoryId: values.categoryId as string,
@@ -119,7 +120,7 @@ export default function CreateEventMultiStepPage() {
         slug: values.slug,
         coverFees: values.coverFees,
         eventType: values.eventType,
-      });
+      }));
 
       if (createdEvent?.id) {
         await publishEventMutation.mutateAsync(createdEvent.id);

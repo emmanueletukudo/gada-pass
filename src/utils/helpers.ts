@@ -55,3 +55,28 @@ export function formatDateRange(
 
   return `From ${formattedStart} to ${formattedEnd}`;
 }
+
+
+export const cleanPayload = <T extends Record<string, any>>(obj: T): T => {
+  return Object.fromEntries(
+    Object.entries(obj).map(([key, value]) => {
+      if (value === '') return [key, undefined];
+      if (
+        typeof value === 'object' &&
+        value !== null &&
+        !Array.isArray(value)
+      ) {
+        return [key, cleanPayload(value)];
+      }
+      if (Array.isArray(value)) {
+        return [
+          key,
+          value.map((item) =>
+            typeof item === 'object' ? cleanPayload(item) : item,
+          ),
+        ];
+      }
+      return [key, value];
+    }),
+  ) as T;
+};
