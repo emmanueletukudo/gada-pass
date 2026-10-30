@@ -345,7 +345,7 @@ export function TicketCheckout({ eventId, tiers = [] }: TicketCheckoutProps) {
                       if (currentQty >= maxAllowed) {
                         if (isFreeTier) {
                           toast.error(
-                            'Free tickets are limited to 1 per order.',
+                            'Free tickets are limited to 1 order per tier.',
                           );
                         } else {
                           toast.error(

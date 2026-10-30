@@ -62,14 +62,14 @@ export function EventPreviewStep({
         </div>
       </div>
 
-      {/* <PublishSuccessModal
+      <PublishSuccessModal
         isOpen={showSuccessModal}
         eventTitle={formData.title}
         eventSlug={resolvedSlug}
         onClose={() => {
           setShowSuccessModal(false);
         }}
-      /> */}
+      />
     </div>
   );
 }
