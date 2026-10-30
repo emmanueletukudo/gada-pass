@@ -65,7 +65,14 @@ export const useCheckoutStore = create<CheckoutState>((set, get) => ({
   setQuantity: (tierId, delta, maxAvailable) => {
     set((state) => {
       const current = state.quantities[tierId] || 0;
-      const updated = Math.max(0, Math.min(maxAvailable, current + delta));
+      const tier = state.tiers.find((t) => t.id === tierId);
+
+      const isFreeTier = tier ? Number(tier.price) === 0 : false;
+      const tierMaxCap = isFreeTier ? 1 : 10;
+      const effectiveMax = Math.min(maxAvailable, tierMaxCap);
+
+      const updated = Math.max(0, Math.min(effectiveMax, current + delta));
+
       return {
         quantities: {
           ...state.quantities,

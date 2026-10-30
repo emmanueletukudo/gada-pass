@@ -338,7 +338,29 @@ export function TicketCheckout({ eventId, tiers = [] }: TicketCheckoutProps) {
                     disabled={
                       isProcessing || isSoldOut || currentQty >= available
                     }
-                    onClick={() => setQuantity(tier.id, 1, available)}
+                    onClick={() => {
+                      const isFreeTier = Number(tier.price) === 0;
+                      const maxAllowed = isFreeTier ? 1 : 10;
+
+                      if (currentQty >= maxAllowed) {
+                        if (isFreeTier) {
+                          toast.error(
+                            'Free tickets are limited to 1 per order.',
+                          );
+                        } else {
+                          toast.error(
+                            'Maximum of 10 paid tickets allowed per tier.',
+                          );
+                        }
+                        return;
+                      }
+
+                      if (currentQty >= available) {
+                        return;
+                      }
+
+                      setQuantity(tier.id, 1, available);
+                    }}
                     className={`grid h-8 w-8 place-items-center rounded-full ${
                       isVip
                         ? 'bg-[#ff765f] hover:bg-[#d2614d]'
