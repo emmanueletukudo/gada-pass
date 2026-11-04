@@ -1,11 +1,11 @@
 "use client"
 
 import { PastEventsTab } from "@/components/dashboard/events/archive/archive-page";
-import { useOrganizerEvents } from "@/lib/hooks-new/useOrganizerEvents";
+import { useOrganizerPastEvents } from '@/lib/hooks-new/useOrganizerEvents';
 
 
 export default function OrganizerArchivePage () {
-  const { data: events = [], isLoading, error } = useOrganizerEvents();
+  const { data: events = [], isLoading, error } = useOrganizerPastEvents();
 
   return (
     <PastEventsTab events={events as any} isLoading={isLoading}/>

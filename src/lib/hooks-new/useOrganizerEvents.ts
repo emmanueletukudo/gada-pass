@@ -21,3 +21,10 @@ export function useOrganizerEvents() {
     queryFn: () => api<OrganizerEvent[]>('/organizer/events'),
   });
 }
+
+export function useOrganizerPastEvents() {
+  return useQuery({
+    queryKey: ['organizer-past-events'],
+    queryFn: () => api<OrganizerEvent[]>('/organizer/past/events')
+  })
+}
