@@ -1,4 +1,4 @@
-import { Asterisk } from 'lucide-react';
+import { Asterisk, Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
 import {
   Control,
@@ -244,6 +244,58 @@ export function GadaCitySelect<TFieldValues extends FieldValues>({
         />
         {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
       </div>
+    </div>
+  );
+}
+
+type GadaPasswordInputProps<T extends FieldValues> = Omit<
+  GadaInputProps<T>,
+  'type'
+> & {
+  autoComplete?: string;
+};
+
+export function GadaPasswordInput<T extends FieldValues>({
+  error,
+  label,
+  required = false,
+  placeHolder,
+  name,
+  register,
+  styles,
+  disabled = false,
+  autoComplete,
+}: GadaPasswordInputProps<T>) {
+  const [visible, setVisible] = useState(false);
+
+  return (
+    <div>
+      {label && <WithLabelRequired label={label} required={required} />}
+      <div className="relative">
+        <input
+          {...register(name)}
+          placeholder={placeHolder}
+          autoComplete={autoComplete}
+          className={`${inputClass} pr-12 ${styles ? styles : ''} ${disabled ? 'opacity-50 cursor-not-allowed bg-gray-300/40' : ''}`}
+          type={visible ? 'text' : 'password'}
+          disabled={disabled}
+        />
+        <button
+          type="button"
+          onClick={() => setVisible((v) => !v)}
+          disabled={disabled}
+          aria-label={visible ? 'Hide password' : 'Show password'}
+          aria-pressed={visible}
+          className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-[#6d766d] transition hover:text-[#17211b] disabled:cursor-not-allowed"
+        >
+          {visible ? (
+            <EyeOff className="h-4 w-4" />
+          ) : (
+            <Eye className="h-4 w-4" />
+          )}
+        </button>
+      </div>
+      {error && <p className="mt-1 text-xs text-[#c34837]">{error}</p>}
     </div>
   );
 }

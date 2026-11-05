@@ -14,7 +14,7 @@ import {
   useResetPassword,
 } from '@/lib/hooks-new/useAuth';
 
-import { GadaInput } from './common/gada-inputs';
+import { GadaInput, GadaPasswordInput } from './common/gada-inputs';
 import { toast } from 'sonner';
 import { useSession, signIn, getSession } from 'next-auth/react';
 import { UserRole } from '@/types/next-auth';
@@ -573,23 +573,23 @@ export function AuthForm({ mode: initialMode }: { mode: 'login' | 'register' }) 
                 />
               </div>
 
-              <GadaInput
+              <GadaPasswordInput
                 register={field}
                 name="password"
-                type="password"
                 placeHolder="Password"
                 required
                 label="Password"
+                autoComplete="new-password"
                 error={errors.password?.message}
               />
 
-              <GadaInput
+              <GadaPasswordInput
                 register={field}
                 name="confirmPassword"
-                type="password"
                 placeHolder="Confirm password"
                 required
                 label="Confirm password"
+                autoComplete="new-password"
                 error={errors.confirmPassword?.message}
               />
 
@@ -621,13 +621,13 @@ export function AuthForm({ mode: initialMode }: { mode: 'login' | 'register' }) 
           />
 
           <div className="space-y-1">
-            <GadaInput
+            <GadaPasswordInput
               register={field}
               name="password"
-              type="password"
               placeHolder="Password"
               required
               label="Password"
+              autoComplete="current-password"
               error={errors.password?.message}
             />
             <div className="flex justify-end">
@@ -704,7 +704,8 @@ export function AuthForm({ mode: initialMode }: { mode: 'login' | 'register' }) 
           <div>
             <h3 className="text-sm font-bold text-[#17211b]">Reset Password</h3>
             <p className="mt-0.5 text-xs text-[#6d766d]">
-              Enter your email address and we&apos;ll send you a password reset code.
+              Enter your email address and we&apos;ll send you a password reset
+              code.
             </p>
           </div>
 
@@ -749,7 +750,9 @@ export function AuthForm({ mode: initialMode }: { mode: 'login' | 'register' }) 
           </div>
 
           <div>
-            <h3 className="text-sm font-bold text-[#17211b]">Create New Password</h3>
+            <h3 className="text-sm font-bold text-[#17211b]">
+              Create New Password
+            </h3>
             <p className="mt-0.5 text-xs text-[#6d766d]">
               Enter the reset code sent to your email and your new password.
             </p>
@@ -765,23 +768,23 @@ export function AuthForm({ mode: initialMode }: { mode: 'login' | 'register' }) 
             error={errors.resetToken?.message}
           />
 
-          <GadaInput
+          <GadaPasswordInput
             register={field}
             name="newPassword"
-            type="password"
             placeHolder="New Password"
             required
             label="New Password"
+            autoComplete="new-password"
             error={errors.newPassword?.message}
           />
 
-          <GadaInput
+          <GadaPasswordInput
             register={field}
             name="confirmNewPassword"
-            type="password"
             placeHolder="Confirm New Password"
             required
             label="Confirm New Password"
+            autoComplete="new-password"
             error={errors.confirmNewPassword?.message}
           />
 

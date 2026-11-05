@@ -6,7 +6,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Logo } from '@/components/logo';
-import { GadaInput } from '@/components/common/gada-inputs';
+import { GadaInput, GadaPasswordInput } from '@/components/common/gada-inputs';
 import { toast } from 'sonner';
 import { UserCheck, AlertCircle, Loader2 } from 'lucide-react';
 import { useInviteInfo, useAcceptInvite } from '@/lib/hooks-new/useAgentInvite';
@@ -185,24 +185,20 @@ function AcceptInviteContent() {
               </span>
               .
             </p>
-
-            <GadaInput
+            <GadaPasswordInput
               register={register}
               name="password"
-              type="password"
               placeHolder="At least 8 characters"
               label="Set Account Password"
               error={errors.password?.message}
             />
-            <GadaInput
+            <GadaPasswordInput
               register={register}
               name="confirmPassword"
-              type="password"
               placeHolder="Re-enter your password"
               label="Confirm Password"
               error={errors.confirmPassword?.message}
             />
-
             <button
               type="submit"
               disabled={isSubmitting}
